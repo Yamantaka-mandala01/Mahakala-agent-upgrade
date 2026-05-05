@@ -622,6 +622,15 @@ You catch issues early and help maintain code quality.
                 this.applySoulTemplate(template);
             });
         });
+        document.querySelectorAll('.toolbar-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const title = btn.getAttribute('title');
+                if (title && title.includes('上传')) this.handleFileUpload();
+                else if (title && title.includes('语音')) this.handleVoiceInput();
+                else if (title && title.includes('代码')) this.handleCodeBlock();
+                else if (title && title.includes('运行')) this.showToolSelector();
+            });
+        });
         this.loadPageContent();
     }
 
@@ -740,6 +749,87 @@ You catch issues early and help maintain code quality.
             this.showNotification(`网页搜索: ${query}`, 'info');
             this.appendMessage('assistant', `正在搜索: ${query}`);
         }
+    }
+
+    handleFileUpload() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.multiple = true;
+        input.onchange = async (e) => {
+            const files = Array.from(e.target.files);
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append('file', file);
+                try {
+                    const resp = await fetch('/api/upload', { method: 'POST', body: formData });
+                    const data = await resp.json();
+                    if (data.id) {
+                        this.appendMessage('user', `[上传文件: ${file.name}]`);
+                        this.appendMessage('assistant', `文件 "${file.name}" 已上传成功 (${(file.size / 1024).toFixed(1)} KB)`);
+                        this.showNotification(`文件已上传: ${file.name}`, 'success');
+                    } else {
+                        this.showNotification(`上传失败: ${data.error || '未知错误'}`, 'error');
+                    }
+                } catch (err) {
+                    this.showNotification(`上传失败: ${err.message}`, 'error');
+                }
+            }
+        };
+        input.click();
+    }
+
+    handleVoiceInput() {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            this.showNotification('浏览器不支持语音识别，请使用 Chrome 浏览器', 'error');
+            return;
+        }
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.lang = this.currentLang === 'zh' ? 'zh-CN' : 'en-US';
+        recognition.interimResults = true;
+        recognition.continuous = false;
+
+        const input = document.getElementById('chat-input');
+        if (!input) return;
+
+        this.showNotification('正在聆听语音...', 'info');
+        recognition.start();
+
+        recognition.onresult = (event) => {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
+            }
+            input.value = transcript;
+            input.style.height = 'auto';
+            input.style.height = input.scrollHeight + 'px';
+        };
+
+        recognition.onend = () => {
+            if (input.value.trim()) {
+                this.showNotification('语音识别完成', 'success');
+            }
+        };
+
+        recognition.onerror = (event) => {
+            this.showNotification(`语音识别错误: ${event.error}`, 'error');
+        };
+    }
+
+    handleCodeBlock() {
+        const input = document.getElementById('chat-input');
+        if (!input) return;
+        const lang = prompt('输入代码语言 (如 javascript, python, rust):', 'javascript');
+        if (lang === null) return;
+        const cursorPos = input.selectionStart;
+        const textBefore = input.value.substring(0, cursorPos);
+        const textAfter = input.value.substring(cursorPos);
+        input.value = textBefore + `\n\`\`\`${lang}\n\n\`\`\`\n` + textAfter;
+        input.focus();
+        const newPos = cursorPos + `\n\`\`\`${lang}\n`.length;
+        input.setSelectionRange(newPos, newPos);
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
     }
 
     showFileManager() {
@@ -2272,37 +2362,115 @@ You catch issues early and help maintain code quality.
     async loadSettingsPage() {
         const container = document.getElementById('settings-content');
         if (!container) return;
-        container.innerHTML = `
-            <div class="settings-section">
-                <h3><i class="fas fa-cog"></i> ${this.t('settings.general')}</h3>
-                <div class="setting-item">
-                    <label>${this.t('config.general.language')}</label>
-                    <select id="settings-lang" onchange="window.app.updateSetting('language', this.value)">
-                        <option value="zh" ${this.config.general.language === 'zh' ? 'selected' : ''}>中文</option>
-                        <option value="en" ${this.config.general.language === 'en' ? 'selected' : ''}>English</option>
-                    </select>
+        const activeTab = document.querySelector('.settings-tab.active')?.getAttribute('data-tab') || 'general';
+
+        if (activeTab === 'general') {
+            container.innerHTML = `
+                <div class="settings-section">
+                    <h3><i class="fas fa-cog"></i> ${this.t('settings.general')}</h3>
+                    <div class="setting-item">
+                        <label>${this.t('config.general.language')}</label>
+                        <select id="settings-lang" onchange="window.app.updateSetting('language', this.value)">
+                            <option value="zh" ${this.config.language === 'zh' ? 'selected' : ''}>中文</option>
+                            <option value="en" ${this.config.language === 'en' ? 'selected' : ''}>English</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>${this.t('config.general.theme')}</label>
+                        <select id="settings-theme" onchange="window.app.updateSetting('theme', this.value)">
+                            <option value="dark" ${this.config.theme === 'dark' ? 'selected' : ''}>${this.t('theme.dark')}</option>
+                            <option value="light" ${this.config.theme === 'light' ? 'selected' : ''}>${this.t('theme.light')}</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>${this.t('config.server.port')}</label>
+                        <input type="number" id="settings-port" value="${this.config.port}" onchange="window.app.updateSetting('port', parseInt(this.value))">
+                    </div>
                 </div>
-                <div class="setting-item">
-                    <label>${this.t('config.general.theme')}</label>
-                    <select id="settings-theme" onchange="window.app.updateSetting('theme', this.value)">
-                        <option value="dark" ${this.config.general.theme === 'dark' ? 'selected' : ''}>${this.t('theme.dark')}</option>
-                        <option value="light" ${this.config.general.theme === 'light' ? 'selected' : ''}>${this.t('theme.light')}</option>
-                    </select>
+                <div class="settings-section">
+                    <h3><i class="fas fa-brain"></i> ${this.t('settings.model')}</h3>
+                    <div class="setting-item">
+                        <label>${this.t('info.model')}</label>
+                        <div id="settings-model-info">${this.activeModel ? `${this.activeModel.name}: ${this.activeModel.model}` : this.t('chat.noModel')}</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="window.app.showConfigModal()">${this.t('config.configure')}</button>
                 </div>
-                <div class="setting-item">
-                    <label>${this.t('config.server.port')}</label>
-                    <input type="number" id="settings-port" value="${this.config.general.port}" onchange="window.app.updateSetting('port', parseInt(this.value))">
+            `;
+        } else if (activeTab === 'model') {
+            container.innerHTML = `
+                <div class="settings-section">
+                    <h3><i class="fas fa-brain"></i> ${this.t('settings.model')}</h3>
+                    <div class="setting-item">
+                        <label>${this.t('info.model')}</label>
+                        <div id="settings-model-info">${this.config.model || '未配置'}</div>
+                    </div>
+                    <div class="setting-item">
+                        <label>Provider</label>
+                        <div>${this.config.provider || '未配置'}</div>
+                    </div>
+                    <div class="setting-item">
+                        <label>API Base URL</label>
+                        <div>${this.config.api_base_url || '未配置'}</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="window.app.showConfigModal()">${this.t('config.configure')}</button>
                 </div>
-            </div>
-            <div class="settings-section">
-                <h3><i class="fas fa-brain"></i> ${this.t('settings.model')}</h3>
-                <div class="setting-item">
-                    <label>${this.t('info.model')}</label>
-                    <div id="settings-model-info">${this.activeModel ? `${this.activeModel.name}: ${this.activeModel.model}` : this.t('chat.noModel')}</div>
+            `;
+        } else if (activeTab === 'appearance') {
+            container.innerHTML = `
+                <div class="settings-section">
+                    <h3><i class="fas fa-palette"></i> 外观设置</h3>
+                    <div class="setting-item">
+                        <label>主题</label>
+                        <select onchange="window.app.updateSetting('theme', this.value)">
+                            <option value="dark" ${this.config.theme === 'dark' ? 'selected' : ''}>深色模式</option>
+                            <option value="light" ${this.config.theme === 'light' ? 'selected' : ''}>浅色模式</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>字体大小</label>
+                        <select onchange="document.documentElement.style.fontSize = this.value">
+                            <option value="14px">小</option>
+                            <option value="16px" selected>中</option>
+                            <option value="18px">大</option>
+                            <option value="20px">特大</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>侧边栏宽度</label>
+                        <input type="range" min="200" max="400" value="280" onchange="document.getElementById('sidebar').style.width = this.value + 'px'">
+                    </div>
                 </div>
-                <button class="btn btn-primary" onclick="window.app.showConfigModal()">${this.t('config.configure')}</button>
-            </div>
-        `;
+            `;
+        } else if (activeTab === 'advanced') {
+            container.innerHTML = `
+                <div class="settings-section">
+                    <h3><i class="fas fa-sliders-h"></i> 高级设置</h3>
+                    <div class="setting-item">
+                        <label>最大 Token</label>
+                        <input type="number" value="${this.config.max_tokens || 2048}" onchange="window.app.updateSetting('max_tokens', parseInt(this.value))">
+                    </div>
+                    <div class="setting-item">
+                        <label>Temperature</label>
+                        <input type="number" step="0.1" min="0" max="2" value="${this.config.temperature || 0.7}" onchange="window.app.updateSetting('temperature', parseFloat(this.value))">
+                    </div>
+                    <div class="setting-item">
+                        <label>工具调用最大迭代次数</label>
+                        <input type="number" value="50" disabled title="已在后端配置为 50 次">
+                    </div>
+                    <div class="setting-item">
+                        <label>数据目录</label>
+                        <div style="color: var(--text-secondary); font-size: 12px;">${this.config.workspace || '默认'}</div>
+                    </div>
+                    <div class="setting-item">
+                        <label>调试模式</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" onchange="window.app.showNotification(this.checked ? '调试模式已开启' : '调试模式已关闭', 'info')">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            `;
+        }
     }
 
     updateSetting(key, value) {

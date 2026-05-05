@@ -1070,12 +1070,37 @@ async fn api_set_locale(
 
 // Upload handlers
 async fn api_upload_file(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
+    mut multipart: axum::extract::Multipart,
 ) -> Json<Value> {
-    Json(serde_json::json!({
-        "success": false,
-        "error": "Multipart upload not implemented in this handler"
-    }))
+    while let Some(field) = multipart.next_field().await.unwrap_or(None) {
+        let name = field.name().unwrap_or("").to_string();
+        if name == "file" {
+            let filename = field.file_name().unwrap_or("unknown").to_string();
+            let content_type = field.content_type().unwrap_or("application/octet-stream").to_string();
+            let data = match field.bytes().await {
+                Ok(d) => d.to_vec(),
+                Err(e) => {
+                    return Json(serde_json::json!({ "error": format!("Failed to read file: {}", e) }));
+                }
+            };
+            match state.upload.save_file(&filename, &data, &content_type) {
+                Ok(file) => {
+                    return Json(serde_json::json!({
+                        "success": true,
+                        "id": file.id,
+                        "name": file.original_name,
+                        "size": file.size,
+                        "mime_type": file.mime_type
+                    }));
+                }
+                Err(e) => {
+                    return Json(serde_json::json!({ "error": format!("Failed to save file: {}", e) }));
+                }
+            }
+        }
+    }
+    Json(serde_json::json!({ "error": "No file field found in multipart data" }))
 }
 
 async fn api_get_upload(
