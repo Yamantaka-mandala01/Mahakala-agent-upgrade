@@ -10,18 +10,19 @@ pub mod web_fetch;
 pub mod calculator;
 pub mod memory_tool;
 pub mod todo;
+pub mod date;
+pub mod json_tool;
+pub mod text_tool;
+pub mod env_tool;
+pub mod file_search;
+pub mod file_delete;
+pub mod http_tool;
 
 // 占位符工具 - 后续实现
 pub mod file_append {
     use super::registry::ToolInfo;
     pub fn create() -> ToolInfo {
         ToolInfo { name: "file_append".to_string(), description: "Append to file".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
-    }
-}
-pub mod file_search {
-    use super::registry::ToolInfo;
-    pub fn create() -> ToolInfo {
-        ToolInfo { name: "file_search".to_string(), description: "Search files".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
     }
 }
 pub mod web_search {

@@ -18,6 +18,25 @@ use mahakala_agent_upgrade::i18n::I18nHandle;
 use mahakala_agent_upgrade::upload::UploadHandle;
 use mahakala_agent_upgrade::cli::CliHandle;
 use mahakala_agent_upgrade::wechat::WechatHandle;
+use mahakala_agent_upgrade::learning::LearningLoop;
+use mahakala_agent_upgrade::semantic_memory::SemanticSearchEngine;
+use mahakala_agent_upgrade::delegation::DelegationSystem;
+use mahakala_agent_upgrade::mcp::McpClient;
+use mahakala_agent_upgrade::gateways::GatewayManager;
+use mahakala_agent_upgrade::terminal::{DockerManager, DockerConfig, SshManager};
+use mahakala_agent_upgrade::browser::{BrowserManager, BrowserConfig};
+use mahakala_agent_upgrade::voice::{VoiceManager, SpeechConfig};
+use mahakala_agent_upgrade::image::{ImageManager, ImageConfig};
+use mahakala_agent_upgrade::multiagent::{MultiAgentFramework, CollaborationConfig};
+use mahakala_agent_upgrade::rbac::{RbacSystem, RbacConfig};
+use mahakala_agent_upgrade::audit::{AuditSystem, AuditConfig};
+use mahakala_agent_upgrade::serverless::ServerlessManager;
+use mahakala_agent_upgrade::community_skills::CommunitySkillCenter;
+use mahakala_agent_upgrade::trajectory::TrajectoryGenerator;
+use mahakala_agent_upgrade::rl_environment::RlEnvironment;
+use mahakala_agent_upgrade::honcho::HonchoModeling;
+use mahakala_agent_upgrade::fts_search::FtsSearchEngine;
+use mahakala_agent_upgrade::memory_prompt::MemoryPromptingSystem;
 
 #[derive(Parser, Debug)]
 #[command(name = "mahakala-agent-upgrade")]
@@ -131,6 +150,121 @@ async fn main() -> anyhow::Result<()> {
         panic!("Failed to create wechat manager")
     });
 
+    // Initialize learning loop system
+    let learning = Arc::new(LearningLoop::new(
+        Arc::new(memory.clone()),
+        Arc::new(skills.clone()),
+    ));
+    tracing::info!("Learning loop system initialized");
+
+    // Initialize semantic search engine
+    let semantic_search = Arc::new(SemanticSearchEngine::new(Arc::new(memory.clone())));
+    tracing::info!("Semantic search engine initialized with {} memories", semantic_search.get_memory_count());
+
+    // Initialize delegation system
+    let delegation = Arc::new(DelegationSystem::new(Arc::new(tool_registry.clone())));
+    tracing::info!("Delegation system initialized");
+
+    // Initialize MCP client
+    let mcp = Arc::new(McpClient::new());
+    tracing::info!("MCP client initialized");
+
+    // Initialize gateway manager
+    let gateways = Arc::new(GatewayManager::new());
+    tracing::info!("Gateway manager initialized");
+
+    // Initialize Docker manager
+    let docker_config = DockerConfig {
+        host: "localhost".to_string(),
+        port: 2375,
+        api_version: "1.41".to_string(),
+    };
+    let docker = Arc::new(DockerManager::new(docker_config));
+    tracing::info!("Docker manager initialized");
+
+    // Initialize SSH manager
+    let ssh = Arc::new(SshManager::new());
+    tracing::info!("SSH manager initialized");
+
+    // Initialize browser manager
+    let browser_config = BrowserConfig {
+        browser_type: "chromium".to_string(),
+        headless: true,
+        viewport_width: 1920,
+        viewport_height: 1080,
+        user_agent: None,
+    };
+    let browser = Arc::new(BrowserManager::new(browser_config));
+    tracing::info!("Browser manager initialized");
+
+    // Initialize voice manager
+    let speech_config = SpeechConfig {
+        model: "whisper".to_string(),
+        language: "zh".to_string(),
+        sample_rate: 16000,
+        channels: 1,
+        format: "pcm".to_string(),
+    };
+    let voice = Arc::new(VoiceManager::new(speech_config));
+    tracing::info!("Voice manager initialized");
+
+    // Initialize image manager
+    let image_config = ImageConfig {
+        model: "dall-e-3".to_string(),
+        default_width: 1024,
+        default_height: 1024,
+        default_format: "png".to_string(),
+    };
+    let image = Arc::new(ImageManager::new(image_config));
+    tracing::info!("Image manager initialized");
+
+    // Initialize multi-agent framework
+    let collaboration_config = CollaborationConfig {
+        max_agents: 10,
+        default_role: "assistant".to_string(),
+        enable_auto_assignment: true,
+    };
+    let multiagent = Arc::new(MultiAgentFramework::new(collaboration_config));
+    tracing::info!("Multi-agent framework initialized");
+
+    // Initialize RBAC system
+    let rbac_config = RbacConfig::default();
+    let rbac = Arc::new(RbacSystem::new(rbac_config));
+    tracing::info!("Role-based access control system initialized with default roles");
+
+    // Initialize audit system
+    let audit_config = AuditConfig::default();
+    let audit = Arc::new(AuditSystem::new(audit_config));
+    tracing::info!("Audit logging and compliance system initialized");
+
+    // Initialize serverless deployment manager
+    let serverless = Arc::new(ServerlessManager::new());
+    tracing::info!("Serverless deployment manager initialized with AWS, Azure, and GCP support");
+
+    // Initialize community skill center
+    let community_skills = Arc::new(CommunitySkillCenter::new(Default::default()));
+    tracing::info!("Community skill center initialized");
+
+    // Initialize trajectory generator
+    let trajectory_generator = Arc::new(TrajectoryGenerator::new());
+    tracing::info!("Trajectory generator for RL training initialized");
+
+    // Initialize RL environment
+    let rl_environment = Arc::new(RlEnvironment::new());
+    tracing::info!("Atropos-compatible RL environment initialized");
+
+    // Initialize Honcho dialectical user modeling
+    let honcho_modeling = Arc::new(HonchoModeling::new(Default::default()));
+    tracing::info!("Honcho dialectical user modeling initialized");
+
+    // Initialize FTS search engine
+    let fts_search = Arc::new(FtsSearchEngine::new(Default::default()));
+    tracing::info!("FTS5 full-text search engine initialized");
+
+    // Initialize memory prompting system
+    let memory_prompting = Arc::new(MemoryPromptingSystem::new());
+    tracing::info!("Periodic memory prompting system initialized");
+
     // Create shared application state
     let state = Arc::new(AppState {
         agent: tokio::sync::RwLock::new(agent),
@@ -148,6 +282,26 @@ async fn main() -> anyhow::Result<()> {
         upload,
         cli: cli_manager,
         wechat,
+        learning,
+        semantic_search,
+        delegation,
+        mcp,
+        gateways,
+        docker,
+        ssh,
+        browser,
+        voice,
+        image,
+        multiagent,
+        rbac,
+        audit,
+        serverless,
+        community_skills,
+        trajectory_generator,
+        rl_environment,
+        honcho_modeling,
+        fts_search,
+        memory_prompting,
     });
 
     // Start web server
