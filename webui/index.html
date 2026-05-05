@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Mahakala Agent</title>
+    <link rel="stylesheet" href="/webui-css?v=2">
+    <link rel="stylesheet" href="/fa.css">
+    <script src="/tauri-adapter"></script>
+    <script>
+    window.__MAHAKALA_MODE__ = 'embedded';
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 顶部标题栏 -->
+        <header class="titlebar">
+            <div class="titlebar-left">
+                <div class="logo">
+                    <i class="fas fa-brain"></i>
+                    <span>Mahakala Agent</span>
+                </div>
+            </div>
+            <div class="titlebar-center">
+                <div class="breadcrumb">
+                    <span data-i18n="breadcrumb.home">首页</span>
+                    <i class="fas fa-chevron-right"></i>
+                    <span id="current-page-name" data-i18n="pages.chat">对话交互</span>
+                </div>
+            </div>
+            <div class="titlebar-right">
+                <div class="theme-switcher">
+                    <button class="theme-btn" id="theme-toggle" title="切换主题">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+                <div class="lang-switcher">
+                    <button class="lang-btn" id="lang-toggle" title="Switch Language">
+                        <span class="lang-text">EN</span>
+                    </button>
+                </div>
+                <div class="status-indicator">
+                    <span class="status-dot online"></span>
+                    <span data-i18n="status.running">运行中</span>
+                    <span class="mode-badge" id="mode-badge">离线</span>
+                </div>
+                <div class="window-controls tauri-only">
+                    <button class="window-btn" id="window-minimize" title="最小化">
+                        <i class="fas fa-window-minimize"></i>
+                    </button>
+                    <button class="window-btn" id="window-maximize" title="最大化">
+                        <i class="fas fa-window-maximize"></i>
+                    </button>
+                    <button class="window-btn window-btn-close" id="window-close" title="关闭">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <!-- 左侧活动栏 -->
+            <aside class="activity-bar">
+                <div class="activity-item active" data-page="chat" title="对话">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <div class="activity-item" data-page="memory" title="记忆">
+                    <i class="fas fa-memory"></i>
+                </div>
+                <div class="activity-item" data-page="skills" title="技能">
+                    <i class="fas fa-magic"></i>
+                </div>
+                <div class="activity-item" data-page="tools" title="工具">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <div class="activity-item" data-page="plugins" title="插件">
+                    <i class="fas fa-puzzle-piece"></i>
+                </div>
+                <div class="activity-item" data-page="messages" title="消息">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="activity-item" data-page="platforms" title="平台">
+                    <i class="fas fa-network-wired"></i>
+                </div>
+                <div class="activity-item" data-page="cron" title="定时">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="activity-spacer"></div>
+                <div class="activity-item" data-page="settings" title="设置">
+                    <i class="fas fa-cog"></i>
+                </div>
+            </aside>
+
+            <!-- 左侧边栏 -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <h3 id="sidebar-title" data-i18n="sidebar.sessions">会话</h3>
+                    <button class="btn-new-session" id="btn-new-session" title="新建对话">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="sidebar-content" id="sidebar-content">
+                    <!-- 动态内容 -->
+                </div>
+            </aside>
+
+            <!-- 主编辑区 -->
+            <main class="editor-area">
+                <!-- 对话页面 -->
+                <div class="page active" id="page-chat">
+                    <div class="chat-layout">
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="message assistant">
+                                <div class="message-avatar">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="message-content">
+                                    <div class="message-header">
+                                        <span class="sender">Mahakala Agent</span>
+                                        <span class="timestamp">Just now</span>
+                                    </div>
+                                    <div class="message-text" data-i18n="chat.welcome">
+                                        你好！我是Mahakala Agent，你的智能助手。我可以帮助你完成各种任务。
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <div class="input-toolbar">
+                                <button class="toolbar-btn" title="上传文件"><i class="fas fa-paperclip"></i></button>
+                                <button class="toolbar-btn" title="语音输入"><i class="fas fa-microphone"></i></button>
+                                <button class="toolbar-btn" title="代码块"><i class="fas fa-code"></i></button>
+                                <button class="toolbar-btn" title="运行命令" onclick="window.mahakalaUI.showToolSelector()"><i class="fas fa-terminal"></i></button>
+                                <button class="toolbar-btn" title="调用技能" onclick="window.mahakalaUI.showSkillSelector()"><i class="fas fa-magic"></i></button>
+                                <button class="toolbar-btn" title="调用插件" onclick="window.mahakalaUI.showPluginSelector()"><i class="fas fa-puzzle-piece"></i></button>
+                            </div>
+                            <div class="input-wrapper">
+                                <textarea id="chat-input" placeholder="输入消息... (Enter发送, Shift+Enter换行)" rows="1"></textarea>
+                                <button class="btn-send" id="send-message" title="发送消息">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 记忆管理页面 -->
+                <div class="page" id="page-memory">
+                    <div class="panel-container">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-memory"></i> <span data-i18n="pages.memory">记忆管理</span></h2>
+                            <div class="panel-actions">
+                                <button class="btn btn-primary" id="add-fact" title="添加新的事实到记忆系统"><i class="fas fa-plus"></i> <span data-i18n="actions.add">添加</span></button>
+                                <button class="btn btn-secondary" id="search-memory" title="搜索记忆中的相关内容"><i class="fas fa-search"></i> <span data-i18n="actions.search">搜索</span></button>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="memory-stats">
+                                <div class="stat-card">
+                                    <div class="stat-icon"><i class="fas fa-database"></i></div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" id="fact-count">0</div>
+                                        <div class="stat-label" data-i18n="memory.facts">事实数量</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" id="entity-count">0</div>
+                                        <div class="stat-label" data-i18n="memory.entities">实体数量</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
+                                    <div class="stat-info">
+                                        <div class="stat-value">1024</div>
+                                        <div class="stat-label" data-i18n="memory.dimensions">向量维度</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="facts-list" id="facts-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 技能中心页面 -->
+                <div class="page" id="page-skills">
+                    <div class="panel-container">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-magic"></i> <span data-i18n="pages.skills">技能中心</span></h2>
+                            <div class="panel-actions">
+                                <button class="btn btn-primary" id="install-skill" title="安装新的技能模块"><i class="fas fa-download"></i> <span data-i18n="actions.install">安装</span></button>
+                                <button class="btn btn-secondary" id="refresh-skills" title="刷新技能列表"><i class="fas fa-sync"></i> <span data-i18n="actions.refresh">刷新</span></button>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="filter-tabs" id="skill-filters">
+                                <div class="filter-tab active" data-category="all" data-i18n="skills.all">全部</div>
+                                <div class="filter-tab" data-category="creative" data-i18n="skills.creative">创意</div>
+                                <div class="filter-tab" data-category="devops" data-i18n="skills.devops">开发运维</div>
+                                <div class="filter-tab" data-category="research" data-i18n="skills.research">研究</div>
+                                <div class="filter-tab" data-category="productivity" data-i18n="skills.productivity">生产力</div>
+                            </div>
+                            <div class="skills-grid" id="skills-grid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 工具管理页面 -->
+                <div class="page" id="page-tools">
+                    <div class="panel-container">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-tools"></i> <span data-i18n="pages.tools">工具管理</span></h2>
+                        </div>
+                        <div class="panel-body">
+                            <div class="filter-tabs" id="tool-filters">
+                                <div class="filter-tab active" data-category="all" data-i18n="tools.all">全部</div>
+                                <div class="filter-tab" data-category="file" data-i18n="tools.file">文件操作</div>
+                                <div class="filter-tab" data-category="web" data-i18n="tools.web">网络工具</div>
+                                <div class="filter-tab" data-category="code" data-i18n="tools.code">代码工具</div>
+                                <div class="filter-tab" data-category="system" data-i18n="tools.system">系统工具</div>
+                            </div>
+                            <div class="tools-list" id="tools-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 插件系统页面 -->
+                <div class="page" id="page-plugins">
+                    <div class="panel-container">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-puzzle-piece"></i> <span data-i18n="pages.plugins">插件系统</span></h2>
+                            <div class="panel-actions">
+                                <button class="btn btn-primary" id="install-plugin" title="安装新的插件扩展"><i class="fas fa-download"></i> <span data-i18n="actions.install">安装</span></button>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="plugins-grid" id="plugins-grid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 消息中心页面 -->
+                <div class="page" id="page-messages">
+                    <div class="panel-container">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-envelope"></i> <span data-i18n="pages.messages">消息中心</span></h2>
+                        </div>
+                        <div class="panel-body">
+                            <div class="message-filters" id="message-filters">
+                                <div class="filter-tab active" data-platform="all" data-i18n="messages.all">全部</div>
+                                <div class="filter-tab" data-platform="telegram">Telegram</div>
+                                <div class="filter-tab" data-platform="discord">Discord</div>
+                                <div class="filter-tab" data-platform="slack">Slack</div>
+                                <div class="filter-tab" data-platform="wechat">微信</div>
+                                <div class="filter-tab" data-platform="qqbot">QQBot</div>
+                            </div>
+                            <div class="message-list" id="message-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 平台连接页面 -->
+                <div class="page" id="page-platforms">
+                    <div class="panel-container">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-network-wired"></i> <span data-i18n="pages.platforms">平台连接</span></h2>
+                        </div>
+                        <div class="panel-body">
+                            <div class="platforms-grid" id="platforms-grid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 定时任务页面 -->
+                <div class="page" id="page-cron">
+                    <div class="panel-container">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-clock"></i> <span data-i18n="pages.cron">定时任务</span></h2>
+                            <div class="panel-actions">
+                                <button class="btn btn-primary" id="add-cron" title="添加新的定时任务"><i class="fas fa-plus"></i> <span data-i18n="actions.add">添加</span></button>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="cron-list" id="cron-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统设置页面 -->
+                <div class="page" id="page-settings">
+                    <div class="panel-container">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-cog"></i> <span data-i18n="pages.settings">系统设置</span></h2>
+                        </div>
+                        <div class="panel-body">
+                            <div class="settings-layout">
+                                <div class="settings-nav">
+                                    <div class="settings-tab active" data-tab="general" data-i18n="settings.general">常规</div>
+                                    <div class="settings-tab" data-tab="model" data-i18n="settings.model">模型</div>
+                                    <div class="settings-tab" data-tab="appearance" data-i18n="settings.appearance">外观</div>
+                                    <div class="settings-tab" data-tab="advanced" data-i18n="settings.advanced">高级</div>
+                                </div>
+                                <div class="settings-content" id="settings-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- 右侧面板 -->
+            <aside class="right-panel" id="right-panel">
+                <div class="panel-tabs">
+                    <div class="panel-tab active" data-panel="info" title="信息"><i class="fas fa-info-circle"></i></div>
+                    <div class="panel-tab" data-panel="output" title="输出"><i class="fas fa-terminal"></i></div>
+                    <div class="panel-tab" data-panel="debug" title="调试"><i class="fas fa-bug"></i></div>
+                </div>
+                <div class="panel-content">
+                    <div class="panel-section active" id="panel-info">
+                        <div class="info-section">
+                            <h4 data-i18n="panel.session">会话信息</h4>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label" data-i18n="info.sessionId">会话ID</span>
+                                    <span class="info-value" id="session-id">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label" data-i18n="info.model">模型</span>
+                                    <span class="info-value" id="current-model">gpt-4</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label" data-i18n="info.tokens">Token</span>
+                                    <span class="info-value" id="token-usage">0 / 8192</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label" data-i18n="info.messages">消息</span>
+                                    <span class="info-value" id="message-count">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="quick-actions">
+                            <h4 data-i18n="panel.actions">快捷操作</h4>
+                            <div class="action-buttons">
+                                <button class="action-btn" title="编写和运行代码"><i class="fas fa-code"></i> <span data-i18n="actions.code">代码</span></button>
+                                <button class="action-btn" title="搜索网页信息"><i class="fas fa-search"></i> <span data-i18n="actions.search">搜索</span></button>
+                                <button class="action-btn" title="打开和管理文件"><i class="fas fa-file"></i> <span data-i18n="actions.file">文件</span></button>
+                                <button class="action-btn" title="打开终端执行命令"><i class="fas fa-terminal"></i> <span data-i18n="actions.terminal">终端</span></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-section" id="panel-output">
+                        <div class="output-content">
+                            <pre id="output-log"></pre>
+                        </div>
+                    </div>
+                    <div class="panel-section" id="panel-debug">
+                        <div class="debug-content">
+                            <pre id="debug-log"></pre>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- 底部状态栏 -->
+        <footer class="statusbar">
+            <div class="statusbar-left">
+                <span class="status-item" id="status-git"><i class="fas fa-code-branch"></i> main</span>
+                <span class="status-item" id="status-tools" data-status-menu="tools"><i class="fas fa-tools"></i> <span data-i18n="statusbar.tools">工具: 31</span>
+                    <div class="popup-menu" id="popup-tools">
+                        <div class="popup-header">已注册工具</div>
+                        <div class="popup-list" id="popup-tools-list"></div>
+                    </div>
+                </span>
+                <span class="status-item" id="status-plugins" data-status-menu="plugins"><i class="fas fa-puzzle-piece"></i> <span data-i18n="statusbar.plugins">插件: 3</span>
+                    <div class="popup-menu" id="popup-plugins">
+                        <div class="popup-header">已加载插件</div>
+                        <div class="popup-list" id="popup-plugins-list"></div>
+                    </div>
+                </span>
+            </div>
+            <div class="statusbar-right">
+                <span class="status-item" id="status-memory" data-status-menu="memory"><i class="fas fa-memory"></i> <span data-i18n="statusbar.memory">记忆: 0</span>
+                    <div class="popup-menu" id="popup-memory">
+                        <div class="popup-header">记忆统计</div>
+                        <div class="popup-stats" id="popup-memory-stats"></div>
+                    </div>
+                </span>
+                <span class="status-item" id="status-skills" data-status-menu="skills"><i class="fas fa-magic"></i> <span data-i18n="statusbar.skills">技能: 0</span>
+                    <div class="popup-menu" id="popup-skills">
+                        <div class="popup-header">已安装技能</div>
+                        <div class="popup-list" id="popup-skills-list"></div>
+                    </div>
+                </span>
+                <span class="status-item"><i class="fas fa-clock"></i> <span id="current-time"></span></span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 通知容器 -->
+    <div class="notifications" id="notifications"></div>
+
+    <!-- 配置弹窗 -->
+    <div class="config-overlay" id="config-overlay" style="display: none;">
+        <div class="config-modal">
+            <div class="config-header">
+                <h2><i class="fas fa-cog"></i> <span data-i18n="config.title">系统配置</span></h2>
+                <button class="config-close" id="config-close" title="关闭配置窗口"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="config-tabs">
+                <button class="config-tab active" data-config="models" title="配置AI模型参数"><i class="fas fa-brain"></i> <span data-i18n="config.models">模型配置</span></button>
+                <button class="config-tab" data-config="platforms" title="配置消息平台连接"><i class="fas fa-network-wired"></i> <span data-i18n="config.platforms">平台配置</span></button>
+                <button class="config-tab" data-config="role" title="配置AI角色定义"><i class="fas fa-user-circle"></i> <span>角色定义</span></button>
+                <button class="config-tab" data-config="general" title="配置通用系统设置"><i class="fas fa-sliders-h"></i> <span data-i18n="config.general">通用设置</span></button>
+            </div>
+            <div class="config-body">
+                <!-- 模型配置 -->
+                <div class="config-section active" id="config-models">
+                    <h3><i class="fas fa-brain"></i> <span data-i18n="config.models.title">AI 模型配置</span></h3>
+                    
+                    <div class="config-group">
+                        <h4><i class="fas fa-server"></i> Ollama (本地模型) <span id="ollama-status" class="status-badge" style="display:none;"></span></h4>
+                        <div class="config-row">
+                            <label data-i18n="config.ollama.url">服务地址</label>
+                            <input type="text" id="cfg-ollama-url" placeholder="http://localhost:11434" value="http://localhost:11434">
+                            <button class="btn btn-secondary btn-sm" id="btn-ollama-detect" data-i18n="config.detect">检测</button>
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.ollama.model">模型名称</label>
+                            <select id="cfg-ollama-model">
+                                <option value="" data-i18n="config.detecting">检测中...</option>
+                            </select>
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.enabled">启用</label>
+                            <input type="checkbox" id="cfg-ollama-enabled">
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <h4><i class="fas fa-cloud"></i> OpenAI</h4>
+                        <div class="config-row">
+                            <label data-i18n="config.api.key">API Key</label>
+                            <input type="password" id="cfg-openai-key" placeholder="sk-...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.model.select">选择模型</label>
+                            <select id="cfg-openai-model">
+                                <option value="gpt-4o">GPT-4o</option>
+                                <option value="gpt-4o-mini">GPT-4o Mini</option>
+                                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                <option value="o3-mini">OpenAI o3-mini</option>
+                                <option value="o1">OpenAI o1</option>
+                            </select>
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.enabled">启用</label>
+                            <input type="checkbox" id="cfg-openai-enabled">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.api.url">API 地址</label>
+                            <input type="text" id="cfg-openai-url" placeholder="https://api.openai.com/v1" value="https://api.openai.com/v1">
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <h4><i class="fas fa-feather"></i> Anthropic</h4>
+                        <div class="config-row">
+                            <label data-i18n="config.api.key">API Key</label>
+                            <input type="password" id="cfg-anthropic-key" placeholder="sk-ant-...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.model.select">选择模型</label>
+                            <select id="cfg-anthropic-model">
+                                <option value="claude-sonnet-4-20250514">Claude Sonnet 4</option>
+                                <option value="claude-opus-20250514">Claude Opus</option>
+                                <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                                <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+                            </select>
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.enabled">启用</label>
+                            <input type="checkbox" id="cfg-anthropic-enabled">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.api.url">API 地址</label>
+                            <input type="text" id="cfg-anthropic-url" placeholder="https://api.anthropic.com/v1" value="https://api.anthropic.com/v1">
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <h4><i class="fas fa-rocket"></i> DeepSeek V4</h4>
+                        <div class="config-row">
+                            <label data-i18n="config.api.key">API Key</label>
+                            <input type="password" id="cfg-deepseek-key" placeholder="sk-...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.model.select">选择模型</label>
+                            <select id="cfg-deepseek-model">
+                                <option value="deepseek-v4-flash">DeepSeek V4 Flash (推荐)</option>
+                                <option value="deepseek-v4-pro">DeepSeek V4 Pro</option>
+                                <option value="deepseek-chat">DeepSeek Chat V3 (即将弃用)</option>
+                                <option value="deepseek-reasoner">DeepSeek Reasoner R1</option>
+                            </select>
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.enabled">启用</label>
+                            <input type="checkbox" id="cfg-deepseek-enabled">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.api.url">API 地址</label>
+                            <input type="text" id="cfg-deepseek-url" placeholder="https://api.deepseek.com" value="https://api.deepseek.com">
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <h4><i class="fas fa-star"></i> MiniMax</h4>
+                        <div class="config-row">
+                            <label data-i18n="config.api.key">API Key</label>
+                            <input type="password" id="cfg-minimax-key" placeholder="...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.group.id">Group ID</label>
+                            <input type="text" id="cfg-minimax-group-id" placeholder="...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.model.select">选择模型</label>
+                            <select id="cfg-minimax-model">
+                                <option value="MiniMax-M2.1">MiniMax M2.1 (推荐)</option>
+                                <option value="MiniMax-M2.1-lightning">MiniMax M2.1 Lightning (高速)</option>
+                                <option value="MiniMax-M2">MiniMax M2</option>
+                                <option value="MiniMax-Text-01">MiniMax Text 01</option>
+                                <option value="MiniMax-VL-01">MiniMax VL 01</option>
+                            </select>
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.enabled">启用</label>
+                            <input type="checkbox" id="cfg-minimax-enabled">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.api.url">API 地址</label>
+                            <input type="text" id="cfg-minimax-url" placeholder="https://api.minimax.chat/v1" value="https://api.minimax.chat/v1">
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <h4><i class="fas fa-gem"></i> GLM (智谱清言)</h4>
+                        <div class="config-row">
+                            <label data-i18n="config.api.key">API Key</label>
+                            <input type="password" id="cfg-glm-key" placeholder="...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.model.select">选择模型</label>
+                            <select id="cfg-glm-model">
+                                <option value="glm-4.6v-flash">GLM-4.6V-Flash (免费)</option>
+                                <option value="glm-4.6v">GLM-4.6V (多模态)</option>
+                                <option value="glm-4.5-flash">GLM-4.5-Flash (免费)</option>
+                                <option value="glm-4.5">GLM-4.5</option>
+                                <option value="glm-4-plus">GLM-4-Plus</option>
+                                <option value="glm-4">GLM-4</option>
+                                <option value="glm-4-flash">GLM-4-Flash</option>
+                                <option value="glm-4-flashx">GLM-4-FlashX</option>
+                                <option value="glm-4v-plus">GLM-4V-Plus</option>
+                                <option value="glm-4-alltools">GLM-4-AllTools</option>
+                                <option value="glm-zero-preview">GLM-Zero-Preview</option>
+                            </select>
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.enabled">启用</label>
+                            <input type="checkbox" id="cfg-glm-enabled">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.api.url">API 地址</label>
+                            <input type="text" id="cfg-glm-url" placeholder="https://open.bigmodel.cn/api/paas/v4" value="https://open.bigmodel.cn/api/paas/v4">
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <h4><i class="fas fa-moon"></i> Kimi (月之暗面)</h4>
+                        <div class="config-row">
+                            <label data-i18n="config.api.key">API Key</label>
+                            <input type="password" id="cfg-kimi-key" placeholder="...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.model.select">选择模型</label>
+                            <select id="cfg-kimi-model">
+                                <option value="kimi-k2-0905-preview">Kimi K2 0905 (256K上下文)</option>
+                                <option value="kimi-k2">Kimi K2</option>
+                                <option value="moonshot-v1-8k">Moonshot V1 8K</option>
+                                <option value="moonshot-v1-32k">Moonshot V1 32K</option>
+                                <option value="moonshot-v1-128k">Moonshot V1 128K</option>
+                                <option value="moonshot-v1-1m">Moonshot V1 1M</option>
+                            </select>
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.enabled">启用</label>
+                            <input type="checkbox" id="cfg-kimi-enabled">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.api.url">API 地址</label>
+                            <input type="text" id="cfg-kimi-url" placeholder="https://api.moonshot.cn/v1" value="https://api.moonshot.cn/v1">
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <h4><i class="fas fa-bolt"></i> Qwen (通义千问)</h4>
+                        <div class="config-row">
+                            <label data-i18n="config.api.key">API Key</label>
+                            <input type="password" id="cfg-qwen-key" placeholder="...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.model.select">选择模型</label>
+                            <select id="cfg-qwen-model">
+                                <option value="qwen3-max">Qwen3-Max (最强)</option>
+                                <option value="qwen3-max-preview">Qwen3-Max-Preview</option>
+                                <option value="qwen-plus">Qwen Plus</option>
+                                <option value="qwen-turbo">Qwen Turbo</option>
+                                <option value="qwen-coder-plus">Qwen Coder Plus</option>
+                                <option value="qwen-coder-turbo">Qwen Coder Turbo</option>
+                                <option value="qwen-vl-max">Qwen VL Max</option>
+                                <option value="qwen-audio-turbo">Qwen Audio Turbo</option>
+                            </select>
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.enabled">启用</label>
+                            <input type="checkbox" id="cfg-qwen-enabled">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.api.url">API 地址</label>
+                            <input type="text" id="cfg-qwen-url" placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1" value="https://dashscope.aliyuncs.com/compatible-mode/v1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 平台配置 -->
+                <div class="config-section" id="config-platforms">
+                    <h3><i class="fas fa-network-wired"></i> <span data-i18n="config.platforms.title">消息平台配置</span></h3>
+                    
+                    <div class="platform-grid">
+                        <div class="platform-card" data-platform="wechat">
+                            <div class="platform-icon"><i class="fab fa-weixin"></i></div>
+                            <div class="platform-name">WeChat</div>
+                            <div class="platform-status offline"><i class="fas fa-circle"></i> <span data-i18n="status.offline">未连接</span></div>
+                            <button class="btn btn-secondary btn-sm config-platform-btn" data-platform="wechat" data-i18n="config.configure">配置</button>
+                        </div>
+                        <div class="platform-card" data-platform="qqbot">
+                            <div class="platform-icon"><i class="fab fa-qq"></i></div>
+                            <div class="platform-name">QQ Bot</div>
+                            <div class="platform-status offline"><i class="fas fa-circle"></i> <span data-i18n="status.offline">未连接</span></div>
+                            <button class="btn btn-secondary btn-sm config-platform-btn" data-platform="qqbot" data-i18n="config.configure">配置</button>
+                        </div>
+                        <div class="platform-card" data-platform="telegram">
+                            <div class="platform-icon"><i class="fab fa-telegram-plane"></i></div>
+                            <div class="platform-name">Telegram</div>
+                            <div class="platform-status offline"><i class="fas fa-circle"></i> <span data-i18n="status.offline">未连接</span></div>
+                            <button class="btn btn-secondary btn-sm config-platform-btn" data-platform="telegram" data-i18n="config.configure">配置</button>
+                        </div>
+                        <div class="platform-card" data-platform="feishu">
+                            <div class="platform-icon"><i class="fas fa-feather-alt"></i></div>
+                            <div class="platform-name">Feishu</div>
+                            <div class="platform-status offline"><i class="fas fa-circle"></i> <span data-i18n="status.offline">未连接</span></div>
+                            <button class="btn btn-secondary btn-sm config-platform-btn" data-platform="feishu" data-i18n="config.configure">配置</button>
+                        </div>
+                        <div class="platform-card" data-platform="discord">
+                            <div class="platform-icon"><i class="fab fa-discord"></i></div>
+                            <div class="platform-name">Discord</div>
+                            <div class="platform-status offline"><i class="fas fa-circle"></i> <span data-i18n="status.offline">未连接</span></div>
+                            <button class="btn btn-secondary btn-sm config-platform-btn" data-platform="discord" data-i18n="config.configure">配置</button>
+                        </div>
+                    </div>
+
+                    <!-- WeChat 配置 -->
+                    <div class="config-group" id="cfg-group-wechat" style="display:none;">
+                        <h4><i class="fab fa-weixin"></i> WeChat 配置</h4>
+                        <div class="config-row">
+                            <label data-i18n="config.wechat.mode">模式</label>
+                            <select id="cfg-wechat-mode">
+                                <option value="web">Web 模式</option>
+                                <option value="pad">Pad 模式</option>
+                                <option value="api">API 模式</option>
+                            </select>
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.api.key">API Key</label>
+                            <input type="password" id="cfg-wechat-key" placeholder="...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.enabled">启用</label>
+                            <input type="checkbox" id="cfg-wechat-enabled">
+                        </div>
+                        <div class="wechat-qr-section">
+                            <label class="wechat-qr-label">二维码登录</label>
+                            <div class="wechat-qr-container" id="wechat-qr-container">
+                                <div class="qr-code-display" id="qr-code-display">
+                                    <span class="qr-placeholder">点击下方按钮获取二维码</span>
+                                </div>
+                                <div class="qr-status" id="qr-status">等待扫码...</div>
+                                <div class="qr-actions">
+                                    <button class="btn btn-primary" id="btn-wechat-qr-login">获取二维码</button>
+                                    <button class="btn btn-secondary" id="btn-wechat-qr-check">检查登录状态</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- QQ Bot 配置 -->
+                    <div class="config-group" id="cfg-group-qqbot" style="display:none;">
+                        <h4><i class="fab fa-qq"></i> QQ Bot 配置</h4>
+                        <div class="config-row">
+                            <label data-i18n="config.qqbot.appid">App ID</label>
+                            <input type="text" id="cfg-qqbot-appid" placeholder="...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.api.secret">App Secret</label>
+                            <input type="password" id="cfg-qqbot-secret" placeholder="...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.qqbot.token">Token</label>
+                            <input type="password" id="cfg-qqbot-token" placeholder="...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.enabled">启用</label>
+                            <input type="checkbox" id="cfg-qqbot-enabled">
+                        </div>
+                    </div>
+
+                    <!-- Telegram 配置 -->
+                    <div class="config-group" id="cfg-group-telegram" style="display:none;">
+                        <h4><i class="fab fa-telegram-plane"></i> Telegram 配置</h4>
+                        <div class="config-row">
+                            <label data-i18n="config.telegram.token">Bot Token</label>
+                            <input type="password" id="cfg-telegram-token" placeholder="123456:ABC-DEF...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.telegram.webhook">Webhook URL</label>
+                            <input type="text" id="cfg-telegram-webhook" placeholder="https://your-domain.com/webhook">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.enabled">启用</label>
+                            <input type="checkbox" id="cfg-telegram-enabled">
+                        </div>
+                    </div>
+
+                    <!-- Feishu 配置 -->
+                    <div class="config-group" id="cfg-group-feishu" style="display:none;">
+                        <h4><i class="fas fa-feather-alt"></i> 飞书配置</h4>
+                        <div class="config-row">
+                            <label data-i18n="config.feishu.appid">App ID</label>
+                            <input type="text" id="cfg-feishu-appid" placeholder="cli_...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.api.secret">App Secret</label>
+                            <input type="password" id="cfg-feishu-secret" placeholder="...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.enabled">启用</label>
+                            <input type="checkbox" id="cfg-feishu-enabled">
+                        </div>
+                    </div>
+
+                    <!-- Discord 配置 -->
+                    <div class="config-group" id="cfg-group-discord" style="display:none;">
+                        <h4><i class="fab fa-discord"></i> Discord 配置</h4>
+                        <div class="config-row">
+                            <label data-i18n="config.discord.token">Bot Token</label>
+                            <input type="password" id="cfg-discord-token" placeholder="...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.discord.clientid">Client ID</label>
+                            <input type="text" id="cfg-discord-clientid" placeholder="...">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.enabled">启用</label>
+                            <input type="checkbox" id="cfg-discord-enabled">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 角色定义 -->
+                <div class="config-section" id="config-role">
+                    <h3><i class="fas fa-user-circle"></i> <span>角色定义 (SOUL.md & USER.md)</span></h3>
+                    
+                    <div class="config-group">
+                        <h4><i class="fas fa-robot"></i> AI 角色定义 (SOUL.md)</h4>
+                        <p class="config-desc">定义AI助手的身份、性格、沟通风格和行为准则</p>
+                        <div class="config-row config-row-textarea">
+                            <textarea id="cfg-soul-md" rows="12" placeholder="You are a helpful AI assistant. You are direct, calm, and technically precise..."></textarea>
+                        </div>
+                        <div class="soul-templates">
+                            <span class="template-tag" data-template="pragmatic">务实工程师</span>
+                            <span class="template-tag" data-template="research">研究伙伴</span>
+                            <span class="template-tag" data-template="teacher">耐心教师</span>
+                            <span class="template-tag" data-template="reviewer">严格审核员</span>
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <h4><i class="fas fa-user"></i> 用户档案 (USER.md)</h4>
+                        <p class="config-desc">记录用户的偏好、沟通风格、期望和工作习惯</p>
+                        <div class="config-row config-row-textarea">
+                            <textarea id="cfg-user-md" rows="8" placeholder="用户偏好简洁的技术回答，不喜欢冗长解释..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 通用设置 -->
+                <div class="config-section" id="config-general">
+                    <h3><i class="fas fa-sliders-h"></i> <span data-i18n="config.general.title">通用设置</span></h3>
+                    
+                    <div class="config-group">
+                        <h4 data-i18n="config.general.language">语言</h4>
+                        <div class="config-row">
+                            <label data-i18n="config.interface.lang">界面语言</label>
+                            <select id="cfg-language">
+                                <option value="zh">简体中文</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <h4 data-i18n="config.general.theme">主题</h4>
+                        <div class="config-row">
+                            <label data-i18n="config.theme">主题模式</label>
+                            <select id="cfg-theme">
+                                <option value="dark" data-i18n="theme.dark">深色</option>
+                                <option value="light" data-i18n="theme.light">浅色</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <h4 data-i18n="config.general.system">系统</h4>
+                        <div class="config-row">
+                            <label data-i18n="config.server.port">服务器端口</label>
+                            <input type="number" id="cfg-port" placeholder="8080" value="8080">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.autoStart">开机自启</label>
+                            <input type="checkbox" id="cfg-autostart">
+                        </div>
+                        <div class="config-row">
+                            <label data-i18n="config.debug">调试模式</label>
+                            <input type="checkbox" id="cfg-debug">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="config-footer">
+                <button class="config-btn config-btn-secondary" id="config-reset" data-i18n="config.reset">重置</button>
+                <button class="config-btn config-btn-primary" id="config-save" data-i18n="config.save">保存配置</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/webui-js?v=2"></script>
+</body>
+</html>
