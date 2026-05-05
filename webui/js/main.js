@@ -11,6 +11,8 @@ class MahakalaWebUI {
         this.modelLatencies = {};
         this.isStreaming = false;
         this.isConfigRestoring = false;
+        this.outputLog = [];
+        this.debugLog = [];
         this.i18n = {
             zh: {
                 'menu.file': '文件', 'menu.edit': '编辑', 'menu.view': '视图', 'menu.tools': '工具', 'menu.help': '帮助',
@@ -631,6 +633,15 @@ You catch issues early and help maintain code quality.
                 else if (title && title.includes('运行')) this.showToolSelector();
             });
         });
+        document.querySelectorAll('.quick-actions .action-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const title = btn.getAttribute('title');
+                if (title && title.includes('代码')) this.showRunCodeDialog();
+                else if (title && title.includes('搜索')) this.showWebSearchDialog();
+                else if (title && title.includes('文件')) this.showFileManager();
+                else if (title && title.includes('终端')) this.showTerminal();
+            });
+        });
         this.loadPageContent();
     }
 
@@ -738,6 +749,8 @@ You catch issues early and help maintain code quality.
     showRunCodeDialog() {
         const code = prompt('输入要运行的代码:');
         if (code) {
+            this.addOutputLog(`运行代码: ${code.substring(0, 50)}${code.length > 50 ? '...' : ''}`);
+            this.addDebugLog(`执行代码请求: ${code.substring(0, 100)}`);
             this.showNotification(`运行代码: ${code.substring(0, 50)}...`, 'info');
             this.appendMessage('assistant', `代码已发送执行:\n\`\`\`\n${code}\n\`\`\``);
         }
@@ -746,6 +759,8 @@ You catch issues early and help maintain code quality.
     showWebSearchDialog() {
         const query = prompt('输入搜索查询:');
         if (query) {
+            this.addOutputLog(`网页搜索: ${query}`);
+            this.addDebugLog(`搜索请求: ${query}`);
             this.showNotification(`网页搜索: ${query}`, 'info');
             this.appendMessage('assistant', `正在搜索: ${query}`);
         }
@@ -833,10 +848,14 @@ You catch issues early and help maintain code quality.
     }
 
     showFileManager() {
+        this.addOutputLog('打开文件管理器');
+        this.addDebugLog('文件管理器面板请求');
         this.showNotification('文件管理器功能开发中', 'info');
     }
 
     showTerminal() {
+        this.addOutputLog('打开终端');
+        this.addDebugLog('终端面板请求');
         this.showNotification('终端功能开发中', 'info');
     }
 
@@ -1025,10 +1044,22 @@ You catch issues early and help maintain code quality.
     }
 
     handleWebSocketMessage(data) {
-        if (data.type === 'chat_response') this.appendMessage('assistant', data.content);
-        else if (data.type === 'status') this.updateStatus(data);
-        else if (data.type === 'tool_call') this.appendToolMessage(data.tool_name, data.status || 'executing', data.message || '');
-        else if (data.type === 'notification') this.showNotification(data.message, data.level || 'info');
+        if (data.type === 'chat_response') {
+            this.appendMessage('assistant', data.content);
+            this.addOutputLog(`模型回复: ${data.content.substring(0, 50)}${data.content.length > 50 ? '...' : ''}`);
+        }
+        else if (data.type === 'status') {
+            this.updateStatus(data);
+            this.addDebugLog(`状态更新: ${JSON.stringify(data)}`);
+        }
+        else if (data.type === 'tool_call') {
+            this.appendToolMessage(data.tool_name, data.status || 'executing', data.message || '');
+            this.addOutputLog(`工具调用: ${data.tool_name} [${data.status || 'executing'}]`);
+        }
+        else if (data.type === 'notification') {
+            this.showNotification(data.message, data.level || 'info');
+            this.addDebugLog(`通知: ${data.message}`);
+        }
     }
 
     appendToolMessage(toolName, status, message) {
@@ -1362,6 +1393,9 @@ You catch issues early and help maintain code quality.
         const message = input.value.trim();
         if (!message) return;
 
+        this.addOutputLog(`用户发送: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
+        this.addDebugLog(`sendMessage called with: ${message.substring(0, 80)}`);
+
         const commandResult = this.parseNaturalLanguageCommand(message);
         if (commandResult) {
             this.appendMessage('user', message);
@@ -1376,7 +1410,7 @@ You catch issues early and help maintain code quality.
         const sendBtn = document.getElementById('send-message');
         if (sendBtn) { sendBtn.disabled = true; sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
         try {
-            // Find the active model config
+            this.addDebugLog('查找活跃模型配置...');
             const models = this.config.models || {};
             let apiKey = '';
             let apiUrl = '';
@@ -1384,23 +1418,31 @@ You catch issues early and help maintain code quality.
             let provider = '';
             for (const [key, modelConfig] of Object.entries(models)) {
                 if (modelConfig.enabled && modelConfig.model) {
-                    // Ollama 本地模型不需要 API Key
                     if (key === 'ollama') {
                         apiUrl = modelConfig.url || '';
                         model = modelConfig.model || '';
                         provider = key;
+                        this.addDebugLog(`使用 Ollama 模型: ${model}`);
                         break;
                     }
-                    // 云端模型需要 API Key
                     if (modelConfig.key) {
                         apiKey = modelConfig.key;
                         apiUrl = modelConfig.url || '';
                         model = modelConfig.model || '';
                         provider = key;
+                        this.addDebugLog(`使用云端模型: ${provider}/${model}`);
                         break;
                     }
                 }
             }
+
+            if (!model) {
+                this.addOutputLog('错误: 未配置任何模型');
+                throw new Error(this.t('chat.noModel'));
+            }
+
+            this.addOutputLog(`发送到模型: ${model}`);
+            this.addDebugLog(`API 请求: POST /api/chat, model=${model}, provider=${provider}`);
 
             const resp = await fetch('/api/chat', {
                 method: 'POST',
@@ -1415,25 +1457,36 @@ You catch issues early and help maintain code quality.
                 })
             });
             
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            if (!resp.ok) {
+                this.addOutputLog(`API 错误: HTTP ${resp.status}`);
+                this.addDebugLog(`API 响应错误: ${resp.status} ${resp.statusText}`);
+                throw new Error(`HTTP ${resp.status}`);
+            }
             
             const data = await resp.json();
+            this.addDebugLog(`API 响应: ${JSON.stringify(data).substring(0, 200)}`);
             
             if (data.response) {
                 this.appendMessage('assistant', data.response);
+                this.addOutputLog(`模型回复: ${data.response.substring(0, 50)}${data.response.length > 50 ? '...' : ''}`);
                 if (this.currentSession) {
                     this.saveMessageToSession(this.currentSession, 'user', message);
                     this.saveMessageToSession(this.currentSession, 'assistant', data.response);
                 }
                 if (data.tool_calls > 0) {
+                    this.addOutputLog(`已调用 ${data.tool_calls} 个工具`);
                     this.showNotification(`已调用 ${data.tool_calls} 个工具`, 'info');
                 }
             } else if (data.error) {
+                this.addOutputLog(`错误: ${data.error}`);
                 throw new Error(data.error);
             } else {
+                this.addOutputLog('错误: 未收到模型回复');
                 throw new Error('No response from agent');
             }
         } catch (e) {
+            this.addOutputLog(`异常: ${e.message}`);
+            this.addDebugLog(`异常堆栈: ${e.stack || e.message}`);
             this.appendMessage('assistant', `${this.t('chat.error')}: ${e.message}`);
         } finally {
             this.isStreaming = false;
@@ -2496,6 +2549,42 @@ You catch issues early and help maintain code quality.
         document.querySelectorAll('.panel-section').forEach(s => s.classList.remove('active'));
         document.querySelector(`.panel-tab[data-panel="${panel}"]`)?.classList.add('active');
         document.getElementById(`panel-${panel}`)?.classList.add('active');
+        if (panel === 'output') this.loadOutputLog();
+        if (panel === 'debug') this.loadDebugLog();
+    }
+
+    loadOutputLog() {
+        const outputEl = document.getElementById('output-log');
+        if (!outputEl) return;
+        outputEl.textContent = this.outputLog.join('\n') || '暂无输出日志';
+        outputEl.scrollTop = outputEl.scrollHeight;
+    }
+
+    loadDebugLog() {
+        const debugEl = document.getElementById('debug-log');
+        if (!debugEl) return;
+        debugEl.textContent = this.debugLog.join('\n') || '暂无调试日志';
+        debugEl.scrollTop = debugEl.scrollHeight;
+    }
+
+    addOutputLog(message) {
+        const timestamp = new Date().toLocaleTimeString();
+        this.outputLog.push(`[${timestamp}] ${message}`);
+        const outputEl = document.getElementById('output-log');
+        if (outputEl && document.getElementById('panel-output')?.classList.contains('active')) {
+            outputEl.textContent = this.outputLog.join('\n');
+            outputEl.scrollTop = outputEl.scrollHeight;
+        }
+    }
+
+    addDebugLog(message) {
+        const timestamp = new Date().toLocaleTimeString();
+        this.debugLog.push(`[${timestamp}] ${message}`);
+        const debugEl = document.getElementById('debug-log');
+        if (debugEl && document.getElementById('panel-debug')?.classList.contains('active')) {
+            debugEl.textContent = this.debugLog.join('\n');
+            debugEl.scrollTop = debugEl.scrollHeight;
+        }
     }
 
     switchSettingsTab(tab) {
