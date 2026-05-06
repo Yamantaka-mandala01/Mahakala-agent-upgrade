@@ -121,81 +121,128 @@ impl AIAgent {
                 }
             };
 
-            let choices = response.get("choices").and_then(|c| c.as_array());
-
-            if let Some(choices) = choices {
-                if let Some(choice) = choices.first() {
-                    if let Some(message) = choice.get("message") {
-                        let content = message.get("content").and_then(|c| c.as_str()).unwrap_or("").to_string();
-                        // Capture reasoning_content from DeepSeek thinking mode
-                        let reasoning = message.get("reasoning_content")
-                            .or_else(|| message.get("reasoning"))
-                            .and_then(|r| r.as_str())
-                            .map(String::from);
-
-                        // Handle tool calls if any
-                        if let Some(tool_calls) = message.get("tool_calls") {
-                            if !tool_calls.is_null() {
-                                let tool_results = self.execute_tool_calls(tool_calls).await?;
-
-                                // Add assistant message with tool calls
-                                if let Ok(calls) = serde_json::from_value::<Vec<ToolCall>>(tool_calls.clone()) {
-                                    self.conversation_history.push(Message {
-                                        role: "assistant".to_string(),
-                                        content: content.clone(),
-                                        tool_calls: Some(calls),
-                                        tool_call_id: None,
-                                        reasoning: reasoning.clone(),
-                                    });
+            // Handle both OpenAI format (choices) and Anthropic format (content)
+            let (content, reasoning, tool_calls_value) = if self.is_anthropic_provider() {
+                // Anthropic response format
+                let content_blocks = response.get("content").and_then(|c| c.as_array());
+                let mut text_content = String::new();
+                let mut tool_calls = None;
+                
+                if let Some(blocks) = content_blocks {
+                    for block in blocks {
+                        let block_type = block.get("type").and_then(|t| t.as_str()).unwrap_or("");
+                        if block_type == "text" {
+                            text_content = block.get("text").and_then(|t| t.as_str()).unwrap_or("").to_string();
+                        } else if block_type == "tool_use" {
+                            let id = block.get("id").and_then(|i| i.as_str()).unwrap_or("").to_string();
+                            let name = block.get("name").and_then(|n| n.as_str()).unwrap_or("").to_string();
+                            let input = block.get("input").cloned().unwrap_or(serde_json::json!({}));
+                            
+                            let tool_call = serde_json::json!([{
+                                "id": id,
+                                "type": "function",
+                                "function": {
+                                    "name": name,
+                                    "arguments": input.to_string()
                                 }
-
-                                // Add tool results to conversation
-                                for result in tool_results {
-                                    self.conversation_history.push(Message {
-                                        role: "tool".to_string(),
-                                        content: result.content.clone(),
-                                        tool_calls: None,
-                                        tool_call_id: Some(result.tool_call_id.clone()),
-                                        reasoning: None,
-                                    });
-                                }
-
-                                // Continue to next iteration (don't return, let the loop continue)
-                                iteration += 1;
-                                continue;
-                            }
+                            }]);
+                            tool_calls = Some(tool_call);
                         }
+                    }
+                }
+                
+                (text_content, None, tool_calls)
+            } else {
+                // OpenAI-compatible response format
+                let choices = response.get("choices").and_then(|c| c.as_array());
+                let mut content = String::new();
+                let mut reasoning = None;
+                let mut tool_calls = None;
+                
+                if let Some(choices) = choices {
+                    if let Some(choice) = choices.first() {
+                        if let Some(message) = choice.get("message") {
+                            content = message.get("content").and_then(|c| c.as_str()).unwrap_or("").to_string();
+                            reasoning = message.get("reasoning_content")
+                                .or_else(|| message.get("reasoning"))
+                                .and_then(|r| r.as_str())
+                                .map(String::from);
+                            tool_calls = message.get("tool_calls").cloned();
+                        }
+                    }
+                }
+                
+                (content, reasoning, tool_calls)
+            };
 
-                        // Check for inline tool calls in content (for Ollama and models that don't support native tool calling)
-                        let is_ollama_provider = self.is_ollama_provider();
-                        let processed_content = if is_ollama_provider {
-                            self.process_inline_tool_calls(&content).await?
-                        } else {
-                            content.clone()
-                        };
+            // Handle tool calls if any
+            if let Some(tool_calls) = &tool_calls_value {
+                if !tool_calls.is_null() && tool_calls.as_array().map_or(false, |a| !a.is_empty()) {
+                    let tool_results = self.execute_tool_calls(tool_calls).await?;
 
-                        // Add assistant message to history
+                    // Add assistant message with tool calls
+                    if let Ok(calls) = serde_json::from_value::<Vec<ToolCall>>(tool_calls.clone()) {
                         self.conversation_history.push(Message {
                             role: "assistant".to_string(),
-                            content: processed_content.clone(),
-                            tool_calls: None,
+                            content: content.clone(),
+                            tool_calls: Some(calls),
                             tool_call_id: None,
                             reasoning: reasoning.clone(),
                         });
-
-                        // Update token usage
-                        if let Some(usage) = response.get("usage") {
-                            self.token_usage.prompt_tokens = usage.get("prompt_tokens").and_then(|t| t.as_u64()).unwrap_or(0) as u32;
-                            self.token_usage.completion_tokens = usage.get("completion_tokens").and_then(|t| t.as_u64()).unwrap_or(0) as u32;
-                            self.token_usage.total_tokens = usage.get("total_tokens").and_then(|t| t.as_u64()).unwrap_or(0) as u32;
-                        }
-
-                        return Ok(processed_content);
                     }
+
+                    // Add tool results to conversation
+                    for result in tool_results {
+                        self.conversation_history.push(Message {
+                            role: "tool".to_string(),
+                            content: result.content.clone(),
+                            tool_calls: None,
+                            tool_call_id: Some(result.tool_call_id.clone()),
+                            reasoning: None,
+                        });
+                    }
+
+                    // Continue to next iteration (don't return, let the loop continue)
+                    iteration += 1;
+                    continue;
                 }
             }
 
-            return Ok("No response from model".to_string());
+            // Check for inline tool calls in content (for Ollama and models that don't support native tool calling)
+            let is_ollama_provider = self.is_ollama_provider();
+            let processed_content = if is_ollama_provider {
+                self.process_inline_tool_calls(&content).await?
+            } else {
+                content.clone()
+            };
+
+            // Add assistant message to history
+            self.conversation_history.push(Message {
+                role: "assistant".to_string(),
+                content: processed_content.clone(),
+                tool_calls: None,
+                tool_call_id: None,
+                reasoning: reasoning.clone(),
+            });
+
+            // Update token usage
+            if self.is_anthropic_provider() {
+                // Anthropic format
+                if let Some(usage) = response.get("usage") {
+                    self.token_usage.prompt_tokens = usage.get("input_tokens").and_then(|t| t.as_u64()).unwrap_or(0) as u32;
+                    self.token_usage.completion_tokens = usage.get("output_tokens").and_then(|t| t.as_u64()).unwrap_or(0) as u32;
+                    self.token_usage.total_tokens = self.token_usage.prompt_tokens + self.token_usage.completion_tokens;
+                }
+            } else {
+                // OpenAI-compatible format
+                if let Some(usage) = response.get("usage") {
+                    self.token_usage.prompt_tokens = usage.get("prompt_tokens").and_then(|t| t.as_u64()).unwrap_or(0) as u32;
+                    self.token_usage.completion_tokens = usage.get("completion_tokens").and_then(|t| t.as_u64()).unwrap_or(0) as u32;
+                    self.token_usage.total_tokens = usage.get("total_tokens").and_then(|t| t.as_u64()).unwrap_or(0) as u32;
+                }
+            }
+
+            return Ok(processed_content);
         }
     }
 
@@ -318,36 +365,83 @@ impl AIAgent {
         let is_ollama = self.is_ollama_provider();
         let is_anthropic = self.is_anthropic_provider();
 
-        let base_url = match &self.config.api_base_url {
-            Some(url) => {
-                if is_ollama && !url.contains("/v1") {
-                    format!("{}/v1", url.trim_end_matches('/'))
-                } else {
-                    url.clone()
-                }
+        // Anthropic uses a different endpoint and format
+        let (url, request_body) = if is_anthropic {
+            let base_url = match &self.config.api_base_url {
+                Some(url) => url.trim_end_matches('/').to_string(),
+                None => "https://api.anthropic.com/v1".to_string(),
+            };
+            let url = format!("{}/messages", base_url);
+            
+            // Convert OpenAI format to Anthropic format
+            let messages: Vec<serde_json::Value> = body["messages"]
+                .as_array()
+                .map(|arr| arr.clone())
+                .unwrap_or_default();
+            
+            // Extract system message
+            let system_content = messages.iter()
+                .find(|m| m.get("role").and_then(|r| r.as_str()) == Some("system"))
+                .and_then(|m| m.get("content").and_then(|c| c.as_str()))
+                .unwrap_or("");
+            
+            // Filter out system messages from the messages array
+            let anthropic_messages: Vec<serde_json::Value> = messages.iter()
+                .filter(|m| m.get("role").and_then(|r| r.as_str()) != Some("system"))
+                .map(|m| {
+                    let role = m.get("role").and_then(|r| r.as_str()).unwrap_or("user");
+                    let content = m.get("content").and_then(|c| c.as_str()).unwrap_or("");
+                    serde_json::json!({
+                        "role": role,
+                        "content": content
+                    })
+                })
+                .collect();
+            
+            let model_name = self.resolve_model_name();
+            let mut anthropic_body = serde_json::json!({
+                "model": model_name,
+                "messages": anthropic_messages,
+                "system": system_content,
+            });
+            
+            if let Some(temp) = self.config.temperature {
+                anthropic_body["temperature"] = serde_json::json!(temp);
             }
-            None => {
-                if let Some(provider) = &self.config.provider {
-                    if provider.starts_with("openai") || provider == "openai" {
-                        "https://api.openai.com/v1".to_string()
-                    } else if is_anthropic {
-                        "https://api.anthropic.com/v1".to_string()
-                    } else if provider.starts_with("ollama") || provider == "ollama" {
-                        "http://localhost:11434/v1".to_string()
-                    } else if provider.starts_with("deepseek") || provider == "deepseek" {
-                        "https://api.deepseek.com/v1".to_string()
+            if let Some(max_tokens) = self.config.max_tokens {
+                anthropic_body["max_tokens"] = serde_json::json!(max_tokens);
+            }
+            
+            (url, anthropic_body)
+        } else {
+            let base_url = match &self.config.api_base_url {
+                Some(url) => {
+                    if is_ollama && !url.contains("/v1") {
+                        format!("{}/v1", url.trim_end_matches('/'))
+                    } else {
+                        url.clone()
+                    }
+                }
+                None => {
+                    if let Some(provider) = &self.config.provider {
+                        if provider.starts_with("openai") || provider == "openai" {
+                            "https://api.openai.com/v1".to_string()
+                        } else if provider.starts_with("ollama") || provider == "ollama" {
+                            "http://localhost:11434/v1".to_string()
+                        } else if provider.starts_with("deepseek") || provider == "deepseek" {
+                            "https://api.deepseek.com/v1".to_string()
+                        } else {
+                            // 默认使用本地 Ollama
+                            "http://localhost:11434/v1".to_string()
+                        }
                     } else {
                         // 默认使用本地 Ollama
                         "http://localhost:11434/v1".to_string()
                     }
-                } else {
-                    // 默认使用本地 Ollama
-                    "http://localhost:11434/v1".to_string()
                 }
-            }
+            };
+            (format!("{}/chat/completions", base_url), body.clone())
         };
-
-        let url = format!("{}/chat/completions", base_url);
 
         tracing::info!("Sending API request to {} with model {}", url, self.config.model);
 
@@ -372,7 +466,7 @@ impl AIAgent {
             request = request.header("anthropic-beta", "tools-2024-05-16");
         }
 
-        let body_str = serde_json::to_string(body).unwrap_or_default();
+        let body_str = serde_json::to_string(&request_body).unwrap_or_default();
         let truncated = if body_str.len() > 2000 {
             let mut end = 2000;
             while end > 0 && !body_str.is_char_boundary(end) {
@@ -385,7 +479,7 @@ impl AIAgent {
         tracing::info!("Request body: {}", truncated);
 
         let response = request
-            .json(body)
+            .json(&request_body)
             .send()
             .await?;
 

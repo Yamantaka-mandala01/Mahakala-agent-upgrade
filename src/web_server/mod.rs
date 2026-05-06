@@ -484,25 +484,53 @@ async fn api_chat(
         }
     }
 
-    // 检查是否为 Ollama 本地模型（不需要 API Key）
-    let is_local = {
+    // 检查是否为本地模型（Ollama 不需要 API Key）
+    let provider_name = {
         let agent = state.agent.read().await;
-        let p = agent.config.provider.as_deref().unwrap_or("");
-        p == "ollama" || p.is_empty()
+        agent.config.provider.as_deref().unwrap_or("").to_string()
     };
-
-    // 非本地模型才需要检查 API Key
-    if !is_local {
+    
+    let is_local_provider = provider_name == "ollama" || provider_name.is_empty();
+    
+    // 云端提供商需要 API Key
+    if !is_local_provider {
         let has_key = {
             let agent = state.agent.read().await;
             agent.config.api_key.as_ref().map(|k| !k.is_empty()).unwrap_or(false)
         };
 
         if !has_key {
+            tracing::error!("API Key not configured for provider: {}", provider_name);
             return Json(serde_json::json!({
-                "error": "API Key not configured. Please configure your AI model in settings or pass apiKey in request.",
+                "error": format!("API Key not configured for {}. Please configure your AI model in settings or pass apiKey in request.", provider_name),
                 "response": ""
             }));
+        }
+    } else {
+        // Ollama 本地模式，检查服务是否运行
+        let base_url = {
+            let agent = state.agent.read().await;
+            agent.config.api_base_url.as_deref()
+                .unwrap_or("http://localhost:11434")
+                .to_string()
+        };
+        
+        // 测试 Ollama 连接
+        let client = reqwest::Client::new();
+        match client.get(&format!("{}/api/tags", base_url)).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                tracing::info!("Ollama connection verified");
+            }
+            Ok(resp) => {
+                tracing::warn!("Ollama returned status: {}", resp.status());
+            }
+            Err(e) => {
+                tracing::error!("Ollama connection failed: {}", e);
+                return Json(serde_json::json!({
+                    "error": format!("Ollama service not available at {}. Please ensure Ollama is running.", base_url),
+                    "response": ""
+                }));
+            }
         }
     }
 
