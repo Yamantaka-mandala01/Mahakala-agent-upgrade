@@ -1,0 +1,33 @@
+# 代码所有者定义 - 保护核心代码结构
+# 任何对以下路径的修改都需要仓库所有者审批
+
+# 仓库所有者默认拥有所有文件的审批权
+* @Yamantaka-mandala01
+
+# 核心AI智能体代码 - 只有所有者可以修改
+/src/agent/ @Yamantaka-mandala01
+/src/agent/core.rs @Yamantaka-mandala01
+/src/agent/prompt_builder.rs @Yamantaka-mandala01
+
+# 主入口和库定义 - 保护主模型结构
+/src/main.rs @Yamantaka-mandala01
+/src/lib.rs @Yamantaka-mandala01
+/src/config.rs @Yamantaka-mandala01
+/src/error.rs @Yamantaka-mandala01
+/src/constants.rs @Yamantaka-mandala01
+
+# Web服务器核心 - 保护API结构
+/src/web_server/ @Yamantaka-mandala01
+
+# 工具注册表 - 保护工具系统架构
+/src/tools/registry.rs @Yamantaka-mandala01
+/src/tools/mod.rs @Yamantaka-mandala01
+/src/tools/all_tools.rs @Yamantaka-mandala01
+
+# 项目配置文件
+/Cargo.toml @Yamantaka-mandala01
+/Cargo.lock @Yamantaka-mandala01
+
+# CI/CD配置 - 保护自动化流程
+/.github/workflows/ @Yamantaka-mandala01
+/.github/CODEOWNERS @Yamantaka-mandala01

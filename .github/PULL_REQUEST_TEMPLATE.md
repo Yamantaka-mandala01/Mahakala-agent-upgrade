@@ -6,6 +6,18 @@ body:
   - type: markdown
     attributes:
       value: |
+        ## ⚠️ 分支策略提醒
+
+        **严禁直接向 `main` 分支提交代码！** 所有修改必须通过以下流程：
+
+        1. 从 `main` 创建新的功能分支：`git checkout -b feature/your-feature-name`
+        2. 在功能分支上完成开发和测试
+        3. 提交 Pull Request 到 `main` 分支
+        4. 等待代码审查和CI检查通过后合并
+
+  - type: markdown
+    attributes:
+      value: |
         Thanks for submitting a pull request! Please fill out the information below.
   - type: textarea
     id: description
@@ -27,6 +39,8 @@ body:
       label: Checklist
       description: Please ensure all items are checked before submitting.
       options:
+        - label: I have created this PR from a **separate branch** (not main)
+          required: true
         - label: I have run `cargo fmt` to format the code
           required: true
         - label: I have run `cargo clippy` and fixed any warnings
