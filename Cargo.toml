@@ -30,7 +30,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 tracing-appender = "0.2"
 
 # 认证
-jsonwebtoken = "9"
+jsonwebtoken = "10"
 argon2 = "0.5"
 rand = "0.8"
 
