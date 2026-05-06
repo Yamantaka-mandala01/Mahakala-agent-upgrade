@@ -29,13 +29,13 @@ use crate::semantic_memory::SemanticSearchEngine;
 use crate::delegation::DelegationSystem;
 use crate::mcp::McpClient;
 use crate::gateways::GatewayManager;
-use crate::terminal::{DockerManager, DockerConfig, SshManager};
-use crate::browser::{BrowserManager, BrowserConfig};
-use crate::voice::{VoiceManager, SpeechConfig};
-use crate::image::{ImageManager, ImageConfig};
-use crate::multiagent::{MultiAgentFramework, CollaborationConfig};
-use crate::rbac::{RbacSystem, RbacConfig};
-use crate::audit::{AuditSystem, AuditConfig};
+use crate::terminal::{DockerManager, SshManager};
+use crate::browser::BrowserManager;
+use crate::voice::VoiceManager;
+use crate::image::ImageManager;
+use crate::multiagent::MultiAgentFramework;
+use crate::rbac::RbacSystem;
+use crate::audit::AuditSystem;
 use crate::serverless::ServerlessManager;
 use crate::community_skills::CommunitySkillCenter;
 use crate::trajectory::TrajectoryGenerator;
@@ -3497,7 +3497,6 @@ async fn api_rl_environment_stats(State(state): State<Arc<AppState>>) -> Json<Va
 }
 
 // Honcho dialectical user modeling API handlers
-use crate::honcho::HonchoConfig;
 
 async fn api_honcho_create_user(
     State(state): State<Arc<AppState>>,
@@ -3638,7 +3637,7 @@ async fn api_honcho_stats(State(state): State<Arc<AppState>>) -> Json<Value> {
 }
 
 // FTS Search API handlers
-use crate::fts_search::{FtsConfig, SearchDocument};
+use crate::fts_search::SearchDocument;
 
 async fn api_fts_add_document(
     State(state): State<Arc<AppState>>,

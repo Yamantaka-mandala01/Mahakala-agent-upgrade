@@ -289,7 +289,7 @@ impl AIAgent {
     fn build_api_request(&self, tool_schemas: &[serde_json::Value]) -> serde_json::Value {
         let is_ollama = self.is_ollama_provider();
         let is_anthropic = self.is_anthropic_provider();
-        let is_deepseek = self.is_deepseek_provider();
+        let _is_deepseek = self.is_deepseek_provider();
 
         // Build system prompt with Mahakala Agent role
         let system_prompt = self.build_system_prompt();

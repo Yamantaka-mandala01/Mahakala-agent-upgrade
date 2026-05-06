@@ -122,7 +122,7 @@ impl GatewayManager {
         }).collect()
     }
 
-    pub fn send_message(&self, gateway_id: &str, chat_id: &str, content: &str) -> Result<String, AppError> {
+    pub fn send_message(&self, gateway_id: &str, _chat_id: &str, _content: &str) -> Result<String, AppError> {
         let gateways = self.gateways.lock();
         if let Some(gateway) = gateways.get(gateway_id) {
             if !gateway.enabled {
@@ -140,7 +140,7 @@ impl GatewayManager {
         }
     }
 
-    pub fn receive_message(&self, gateway_id: &str, message: Message) -> Result<(), AppError> {
+    pub fn receive_message(&self, gateway_id: &str, _message: Message) -> Result<(), AppError> {
         let gateways = self.gateways.lock();
         if gateways.contains_key(gateway_id) {
             let mut message_counts = self.message_counts.lock();

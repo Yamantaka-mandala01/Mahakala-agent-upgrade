@@ -28,7 +28,7 @@ pub fn create() -> ToolInfo {
                 .ok_or_else(|| anyhow::anyhow!("Missing 'expression' parameter"))?;
             
             // 简单计算器实现
-            let result = match meval::eval_str(expression) {
+            let result = match evalexpr::eval(expression) {
                 Ok(val) => format!("{}", val),
                 Err(e) => format!("Error evaluating expression: {}", e),
             };

@@ -58,6 +58,7 @@ pub struct UserModel {
 pub struct HonchoModeling {
     users: Arc<Mutex<HashMap<String, UserModel>>>,
     interactions: Arc<Mutex<Vec<InteractionRecord>>>,
+    #[allow(dead_code)]
     analytics: Arc<Mutex<HashMap<String, serde_json::Value>>>,
     config: HonchoConfig,
 }
@@ -243,7 +244,7 @@ impl HonchoModeling {
     fn estimate_complexity(&self, text: &str) -> f64 {
         let word_count = text.split_whitespace().count();
         let unique_words = text.split_whitespace().collect::<std::collections::HashSet<_>>().len();
-        let avg_word_length = if word_count > 0 { text.len() as f64 / word_count as f64 } else { 0.0 };
+        let _avg_word_length = if word_count > 0 { text.len() as f64 / word_count as f64 } else { 0.0 };
         
         let lexical_diversity = if word_count > 0 { unique_words as f64 / word_count as f64 } else { 0.0 };
         let length_factor = (word_count as f64 / 100.0).min(1.0);
@@ -303,7 +304,7 @@ impl HonchoModeling {
         &self,
         state: &mut DialecticalState,
         input: &str,
-        response: &str,
+        _response: &str,
     ) -> Result<(), AppError> {
         if state.thesis.is_empty() {
             state.thesis = input.to_string();

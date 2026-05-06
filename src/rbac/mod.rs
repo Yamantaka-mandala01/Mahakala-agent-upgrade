@@ -54,6 +54,7 @@ pub struct RbacSystem {
     roles: Arc<Mutex<HashMap<String, Role>>>,
     users: Arc<Mutex<HashMap<String, User>>>,
     permissions: Arc<Mutex<HashMap<String, Permission>>>,
+    #[allow(dead_code)]
     user_roles: Arc<Mutex<HashMap<String, Vec<String>>>>,
     config: RbacConfig,
 }

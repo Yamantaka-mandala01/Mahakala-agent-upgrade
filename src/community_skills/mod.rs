@@ -361,7 +361,7 @@ impl CommunitySkillCenter {
     pub fn get_stats(&self) -> serde_json::Value {
         let skills = self.skills.lock().unwrap();
         let reviews = self.reviews.lock().unwrap();
-        let downloads = self.downloads.lock().unwrap();
+        let _downloads = self.downloads.lock().unwrap();
 
         let total_downloads: u64 = skills.values().map(|s| s.downloads).sum();
         let total_reviews: usize = reviews.values().map(|v| v.len()).sum();

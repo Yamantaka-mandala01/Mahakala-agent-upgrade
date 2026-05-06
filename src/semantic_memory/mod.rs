@@ -2,7 +2,6 @@ use crate::error::AppError;
 use crate::memory::MemoryManager;
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
