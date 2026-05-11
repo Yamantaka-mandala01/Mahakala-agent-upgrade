@@ -1,4 +1,7 @@
 use super::registry::ToolInfo;
+use std::future::Future;
+use std::pin::Pin;
+use std::sync::Arc;
 
 pub fn create() -> ToolInfo {
     ToolInfo {
@@ -25,33 +28,36 @@ pub fn create() -> ToolInfo {
                 }
             }
         }),
-        execute: Box::new(|arguments| {
-            let args: serde_json::Value = serde_json::from_str(arguments)
-                .map_err(|e| anyhow::anyhow!("Invalid arguments: {}", e))?;
+        execute: Arc::new(|arguments: &str| {
+            let arguments = arguments.to_string();
+            Box::pin(async move {
+                let args: serde_json::Value = serde_json::from_str(&arguments)
+                    .map_err(|e| anyhow::anyhow!("Invalid arguments: {}", e))?;
 
-            let path = args.get("path").and_then(|v| v.as_str())
-                .ok_or_else(|| anyhow::anyhow!("path is required"))?;
-            let recursive = args.get("recursive").and_then(|v| v.as_bool()).unwrap_or(false);
+                let path = args.get("path").and_then(|v| v.as_str())
+                    .ok_or_else(|| anyhow::anyhow!("path is required"))?;
+                let recursive = args.get("recursive").and_then(|v| v.as_bool()).unwrap_or(false);
 
-            let path = std::path::Path::new(path);
+                let path = std::path::Path::new(path);
 
-            if !path.exists() {
-                return Err(anyhow::anyhow!("Path not found: {}", path.display()));
-            }
+                if !path.exists() {
+                    return Err(anyhow::anyhow!("Path not found: {}", path.display()));
+                }
 
-            if path.is_dir() && recursive {
-                std::fs::remove_dir_all(path)
-                    .map_err(|e| anyhow::anyhow!("Failed to delete directory: {}", e))?;
-                Ok(format!("Directory deleted: {}", path.display()))
-            } else if path.is_dir() {
-                std::fs::remove_dir(path)
-                    .map_err(|e| anyhow::anyhow!("Failed to delete directory: {}", e))?;
-                Ok(format!("Empty directory deleted: {}", path.display()))
-            } else {
-                std::fs::remove_file(path)
-                    .map_err(|e| anyhow::anyhow!("Failed to delete file: {}", e))?;
-                Ok(format!("File deleted: {}", path.display()))
-            }
+                if path.is_dir() && recursive {
+                    tokio::fs::remove_dir_all(path).await
+                        .map_err(|e| anyhow::anyhow!("Failed to delete directory: {}", e))?;
+                    Ok(format!("Directory deleted: {}", path.display()))
+                } else if path.is_dir() {
+                    tokio::fs::remove_dir(path).await
+                        .map_err(|e| anyhow::anyhow!("Failed to delete directory: {}", e))?;
+                    Ok(format!("Empty directory deleted: {}", path.display()))
+                } else {
+                    tokio::fs::remove_file(path).await
+                        .map_err(|e| anyhow::anyhow!("Failed to delete file: {}", e))?;
+                    Ok(format!("File deleted: {}", path.display()))
+                }
+            }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>
         }),
     }
 }

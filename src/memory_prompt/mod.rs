@@ -63,6 +63,12 @@ pub struct MemoryPromptingSystem {
     counters: Arc<Mutex<HashMap<String, usize>>>,
 }
 
+impl Default for MemoryPromptingSystem {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MemoryPromptingSystem {
     pub fn new() -> Self {
         Self {

@@ -177,7 +177,7 @@ impl AIAgent {
 
             // Handle tool calls if any
             if let Some(tool_calls) = &tool_calls_value {
-                if !tool_calls.is_null() && tool_calls.as_array().map_or(false, |a| !a.is_empty()) {
+                if !tool_calls.is_null() && tool_calls.as_array().is_some_and(|a| !a.is_empty()) {
                     let tool_results = self.execute_tool_calls(tool_calls).await?;
 
                     // Add assistant message with tool calls
@@ -247,15 +247,15 @@ impl AIAgent {
     }
 
     fn is_ollama_provider(&self) -> bool {
-        self.config.provider.as_deref().map_or(false, |p| p == "ollama")
+        self.config.provider.as_deref() == Some("ollama")
     }
 
     fn is_anthropic_provider(&self) -> bool {
-        self.config.provider.as_deref().map_or(false, |p| p.contains("anthropic"))
+        self.config.provider.as_deref().is_some_and(|p| p.contains("anthropic"))
     }
 
     fn is_deepseek_provider(&self) -> bool {
-        self.config.provider.as_deref().map_or(false, |p| p.contains("deepseek"))
+        self.config.provider.as_deref().is_some_and(|p| p.contains("deepseek"))
     }
 
     fn resolve_model_name(&self) -> &str {
@@ -351,11 +351,7 @@ impl AIAgent {
         }
 
         if let Some(max_tokens) = self.config.max_tokens {
-            if is_anthropic {
-                body["max_tokens"] = serde_json::json!(max_tokens);
-            } else {
-                body["max_tokens"] = serde_json::json!(max_tokens);
-            }
+            body["max_tokens"] = serde_json::json!(max_tokens);
         }
 
         body
@@ -375,8 +371,7 @@ impl AIAgent {
             
             // Convert OpenAI format to Anthropic format
             let messages: Vec<serde_json::Value> = body["messages"]
-                .as_array()
-                .map(|arr| arr.clone())
+                .as_array().cloned()
                 .unwrap_or_default();
             
             // Extract system message

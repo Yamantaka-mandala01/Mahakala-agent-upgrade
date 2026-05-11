@@ -12,6 +12,12 @@ pub struct CliManager {
     commands: Vec<CliCommand>,
 }
 
+impl Default for CliManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CliManager {
     pub fn new() -> Self {
         let commands = vec![
@@ -84,7 +90,7 @@ impl CliManager {
     }
 
     pub fn execute(&self, input: &str) -> Result<String, AppError> {
-        let parts: Vec<&str> = input.trim().split_whitespace().collect();
+        let parts: Vec<&str> = input.split_whitespace().collect();
         if parts.is_empty() {
             return Ok(String::new());
         }
@@ -140,6 +146,12 @@ impl CliManager {
 #[derive(Clone)]
 pub struct CliHandle {
     inner: std::sync::Arc<CliManager>,
+}
+
+impl Default for CliHandle {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CliHandle {

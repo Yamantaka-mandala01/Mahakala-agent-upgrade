@@ -251,7 +251,7 @@ impl FtsSearchEngine {
 
     fn extract_highlights(&self, content: &str, query_words: &[String]) -> Vec<String> {
         let mut highlights = Vec::new();
-        let sentences: Vec<&str> = content.split(|c| c == '.' || c == '!' || c == '?')
+        let sentences: Vec<&str> = content.split(['.', '!', '?'])
             .filter(|s| !s.trim().is_empty())
             .collect();
         
@@ -299,7 +299,7 @@ impl FtsSearchEngine {
     }
 
     fn extractive_summary(&self, content: &str, max_length: usize) -> String {
-        let sentences: Vec<&str> = content.split(|c| c == '.' || c == '!' || c == '?')
+        let sentences: Vec<&str> = content.split(['.', '!', '?'])
             .filter(|s| !s.trim().is_empty())
             .collect();
         
@@ -323,7 +323,7 @@ impl FtsSearchEngine {
     }
 
     fn extract_key_points(&self, content: &str, max_points: usize) -> Vec<String> {
-        let sentences: Vec<&str> = content.split(|c| c == '.' || c == '!' || c == '?')
+        let sentences: Vec<&str> = content.split(['.', '!', '?'])
             .filter(|s| !s.trim().is_empty())
             .collect();
         

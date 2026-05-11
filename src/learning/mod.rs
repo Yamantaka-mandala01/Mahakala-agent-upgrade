@@ -171,7 +171,7 @@ impl LearningLoop {
     }
 
     pub fn suggest_skill_improvements(&self) -> Result<Vec<String>, AppError> {
-        let facts = self.memory.list_facts(Some("learning"))?;
+        let facts = self.memory.list_facts(Some("learning"), Some(50), None)?;
         let mut suggestions = vec![];
 
         for fact in facts.iter().take(10) {

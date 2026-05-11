@@ -17,6 +17,12 @@ pub mod memory_manager {
         memories: HashMap<String, String>,
     }
     
+    impl Default for MemoryManager {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+
     impl MemoryManager {
         pub fn new() -> Self {
             Self { memories: HashMap::new() }
@@ -46,6 +52,12 @@ pub mod trajectory {
     pub struct Trajectory {
         events: Vec<String>,
     }
+    impl Default for Trajectory {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+
     impl Trajectory {
         pub fn new() -> Self { Self { events: Vec::new() } }
         pub fn record(&mut self, event: &str) { self.events.push(event.to_string()); }

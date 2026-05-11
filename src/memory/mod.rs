@@ -145,21 +145,24 @@ impl MemoryStore {
         Ok(result)
     }
 
-    pub fn list_facts(&self, category: Option<&str>) -> Result<Vec<MemoryFact>, AppError> {
+    pub fn list_facts(&self, category: Option<&str>, limit: Option<usize>, offset: Option<usize>) -> Result<Vec<MemoryFact>, AppError> {
         let conn = self.conn.lock();
+        let limit_val = limit.unwrap_or(50) as i64;
+        let offset_val = offset.unwrap_or(0) as i64;
+        
         let sql = if category.is_some() {
-            "SELECT id, content, category, created_at, updated_at FROM facts WHERE category = ?1 ORDER BY created_at DESC"
+            "SELECT id, content, category, created_at, updated_at FROM facts WHERE category = ?1 ORDER BY created_at DESC LIMIT ?2 OFFSET ?3"
         } else {
-            "SELECT id, content, category, created_at, updated_at FROM facts ORDER BY created_at DESC"
+            "SELECT id, content, category, created_at, updated_at FROM facts ORDER BY created_at DESC LIMIT ?1 OFFSET ?2"
         };
 
         let mut stmt = conn.prepare(sql)
             .map_err(|e| AppError::Internal(format!("Prepare failed: {}", e)))?;
 
         let rows = if let Some(cat) = category {
-            stmt.query_map([cat], map_fact_row)
+            stmt.query_map(rusqlite::params![cat, limit_val, offset_val], map_fact_row)
         } else {
-            stmt.query_map([], map_fact_row)
+            stmt.query_map(rusqlite::params![limit_val, offset_val], map_fact_row)
         };
 
         let facts: Result<Vec<_>, _> = rows
@@ -324,8 +327,8 @@ impl MemoryManager {
         self.store.search_facts(query)
     }
 
-    pub fn list_facts(&self, category: Option<&str>) -> Result<Vec<MemoryFact>, AppError> {
-        self.store.list_facts(category)
+    pub fn list_facts(&self, category: Option<&str>, limit: Option<usize>, offset: Option<usize>) -> Result<Vec<MemoryFact>, AppError> {
+        self.store.list_facts(category, limit, offset)
     }
 
     pub fn delete_fact(&self, id: &str) -> Result<bool, AppError> {

@@ -73,7 +73,7 @@ impl SemanticSearchEngine {
     }
     
     fn load_existing_memories(&self) {
-        if let Ok(facts) = self.memory_manager.list_facts(None) {
+        if let Ok(facts) = self.memory_manager.list_facts(None, Some(500), None) {
             let mut memories = self.memories.lock();
             for fact in facts {
                 let embedding = EmbeddingGenerator::generate(&fact.content);

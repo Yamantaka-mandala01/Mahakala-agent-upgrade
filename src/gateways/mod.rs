@@ -41,6 +41,12 @@ pub struct GatewayManager {
     message_counts: Arc<Mutex<HashMap<String, usize>>>,
 }
 
+impl Default for GatewayManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GatewayManager {
     pub fn new() -> Self {
         Self {

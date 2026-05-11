@@ -81,6 +81,7 @@ impl CommunitySkillCenter {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn publish_skill(
         &self,
         user_id: String,
@@ -176,6 +177,7 @@ impl CommunitySkillCenter {
         result
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn update_skill(
         &self,
         skill_id: &str,
@@ -274,7 +276,7 @@ impl CommunitySkillCenter {
             return Err(AppError::Internal("Reviews are disabled".to_string()));
         }
 
-        if rating < 1 || rating > 5 {
+        if !(1..=5).contains(&rating) {
             return Err(AppError::Internal("Rating must be between 1 and 5".to_string()));
         }
 

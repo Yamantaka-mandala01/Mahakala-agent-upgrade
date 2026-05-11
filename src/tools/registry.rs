@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::future::Future;
+use std::pin::Pin;
 use parking_lot::RwLock;
 
-pub type ToolFn = Box<dyn Fn(&str) -> anyhow::Result<String> + Send + Sync>;
+pub type ToolFn = Arc<dyn Fn(&str) -> Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>> + Send + Sync>;
 
 pub struct ToolInfo {
     pub name: String,
@@ -13,6 +15,12 @@ pub struct ToolInfo {
 
 pub struct ToolRegistry {
     tools: Arc<RwLock<HashMap<String, ToolInfo>>>,
+}
+
+impl Default for ToolRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ToolRegistry {
@@ -28,10 +36,14 @@ impl ToolRegistry {
     }
 
     pub async fn execute_tool(&self, name: &str, arguments: &str) -> anyhow::Result<String> {
-        let tools = self.tools.read();
-        let tool = tools.get(name)
-            .ok_or_else(|| anyhow::anyhow!("Tool not found: {}", name))?;
-        (tool.execute)(arguments)
+        let tool_fn = {
+            let tools = self.tools.read();
+            let tool = tools.get(name)
+                .ok_or_else(|| anyhow::anyhow!("Tool not found: {}", name))?;
+            // Clone the Arc<ToolFn> to avoid holding the lock across await
+            tool.execute.clone()
+        };
+        tool_fn(arguments).await
     }
 
     pub fn get_tool_schemas(&self) -> Vec<serde_json::Value> {

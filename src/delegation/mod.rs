@@ -191,7 +191,7 @@ impl DelegationSystem {
                         }
                         Err(_) => {
                             t.status = TaskStatus::Failed;
-                            t.result = Some(format!("Task execution failed"));
+                            t.result = Some("Task execution failed".to_string());
                             t.completed_at = Some(chrono::Utc::now().timestamp());
                         }
                     }

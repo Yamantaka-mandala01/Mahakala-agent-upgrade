@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>梵文"阿" Logo</title>
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a0f;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  h1 {
+    color: #c9a84c;
+    margin-bottom: 10px;
+    font-size: 18px;
+    letter-spacing: 6px;
+    font-weight: 300;
+  }
+  .logo-container {
+    display: flex;
+    gap: 60px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    padding: 30px;
+  }
+  .logo-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(145deg, #12121a, #1a1a2e);
+    border-radius: 24px;
+    padding: 30px;
+    border: 1px solid rgba(201, 168, 76, 0.15);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .logo-card p {
+    color: #8888aa;
+    margin: 15px 0 5px;
+    font-size: 13px;
+    letter-spacing: 2px;
+  }
+  svg {
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<h1>🕉 梵文 "阿" · Logo 设计</h1>
+
+<div class="logo-container">
+
+  <!-- 款式一：金色经典圆章 -->
+  <div class="logo-card">
+    <svg width="240" height="240" viewBox="0 0 240 240">
+      <defs>
+        <radialGradient id="goldGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#f6d365"/>
+          <stop offset="100%" stop-color="#c9a84c"/>
+        </radialGradient>
+        <radialGradient id="bgGrad1" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#1a1a3e"/>
+          <stop offset="100%" stop-color="#0d0d1a"/>
+        </radialGradient>
+        <filter id="glow1">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <!-- 外环 -->
+      <circle cx="120" cy="120" r="110" fill="none" stroke="url(#goldGrad)" stroke-width="2.5" opacity="0.4"/>
+      <circle cx="120" cy="120" r="100" fill="url(#bgGrad1)" stroke="url(#goldGrad)" stroke-width="1.5" opacity="0.6"/>
+      <!-- 内圈装饰 -->
+      <circle cx="120" cy="120" r="85" fill="none" stroke="url(#goldGrad)" stroke-width="0.8" opacity="0.25"/>
+      <!-- 梵文 "अ" -->
+      <text x="120" y="142" text-anchor="middle" font-size="95" font-family="'Noto Sans Devanagari','Nirmala UI','Mangal',sans-serif" fill="url(#goldGrad)" filter="url(#glow1)" font-weight="bold">अ</text>
+      <!-- 底部小点装饰 -->
+      <circle cx="120" cy="185" r="2.5" fill="#f6d365" opacity="0.5"/>
+    </svg>
+    <p>✦ 金色经典 ✦</p>
+  </div>
+
+  <!-- 款式二：极简现代线条 -->
+  <div class="logo-card">
+    <svg width="240" height="240" viewBox="0 0 240 240">
+      <defs>
+        <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#7dd3fc"/>
+          <stop offset="100%" stop-color="#a78bfa"/>
+        </linearGradient>
+        <filter id="glow2">
+          <feGaussianBlur stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <rect x="2" y="2" width="236" height="236" rx="20" fill="#0f0f1a" stroke="url(#lineGrad)" stroke-width="1" opacity="0.3"/>
+      <!-- 精简线条装饰 -->
+      <line x1="40" y1="40" x2="200" y2="200" stroke="url(#lineGrad)" stroke-width="0.5" opacity="0.15"/>
+      <line x1="200" y1="40" x2="40" y2="200" stroke="url(#lineGrad)" stroke-width="0.5" opacity="0.15"/>
+      <!-- 梵文 "अ" -->
+      <text x="120" y="142" text-anchor="middle" font-size="90" font-family="'Noto Sans Devanagari','Nirmala UI','Mangal',sans-serif" fill="url(#lineGrad)" filter="url(#glow2)" font-weight="300">अ</text>
+      <!-- 极简装饰圆 -->
+      <circle cx="120" cy="190" r="3" fill="#a78bfa" opacity="0.4"/>
+    </svg>
+    <p>✦ 极简现代 ✦</p>
+  </div>
+
+  <!-- 款式三：莲花底座 -->
+  <div class="logo-card">
+    <svg width="240" height="240" viewBox="0 0 240 240">
+      <defs>
+        <radialGradient id="lotusGrad" cx="50%" cy="40%" r="60%">
+          <stop offset="0%" stop-color="#ffecd2"/>
+          <stop offset="100%" stop-color="#fcb69f"/>
+        </radialGradient>
+        <linearGradient id="petalGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="#e8a87c"/>
+          <stop offset="100%" stop-color="#f7d9c4"/>
+        </linearGradient>
+        <filter id="glow3">
+          <feGaussianBlur stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <rect x="2" y="2" width="236" height="236" rx="40" fill="#120e0a" stroke="rgba(232,168,124,0.2)" stroke-width="1"/>
+      <!-- 莲花花瓣 -->
+      <g opacity="0.25">
+        <ellipse cx="120" cy="195" rx="8" ry="20" fill="#e8a87c"/>
+        <ellipse cx="105" cy="192" rx="7" ry="18" fill="#e8a87c" transform="rotate(-15 105 192)"/>
+        <ellipse cx="135" cy="192" rx="7" ry="18" fill="#e8a87c" transform="rotate(15 135 192)"/>
+        <ellipse cx="92" cy="185" rx="6" ry="16" fill="#e8a87c" transform="rotate(-30 92 185)"/>
+        <ellipse cx="148" cy="185" rx="6" ry="16" fill="#e8a87c" transform="rotate(30 148 185)"/>
+      </g>
+      <!-- 梵文 "अ" -->
+      <text x="120" y="135" text-anchor="middle" font-size="85" font-family="'Noto Sans Devanagari','Nirmala UI','Mangal',sans-serif" fill="url(#lotusGrad)" filter="url(#glow3)" font-weight="bold">अ</text>
+      <!-- 底部莲花座 -->
+      <path d="M80 185 Q120 175 160 185 Q120 195 80 185" fill="none" stroke="rgba(232,168,124,0.3)" stroke-width="1.5"/>
+      <path d="M85 190 Q120 180 155 190" fill="none" stroke="rgba(232,168,124,0.2)" stroke-width="1"/>
+    </svg>
+    <p>✦ 莲花禅意 ✦</p>
+  </div>
+
+</div>
+
+<!-- 大图预览 - 第一款 -->
+<div style="margin-top:30px; text-align:center; background:linear-gradient(145deg,#12121a,#1a1a2e); border-radius:24px; padding:40px 50px; border:1px solid rgba(201,168,76,0.15);">
+  <p style="color:#c9a84c; font-size:14px; letter-spacing:4px; margin-bottom:20px;">🕉 主推款 · 高清版 🕉</p>
+  <svg width="400" height="400" viewBox="0 0 400 400">
+    <defs>
+      <radialGradient id="mainGold" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#f6d365"/>
+        <stop offset="50%" stop-color="#daa520"/>
+        <stop offset="100%" stop-color="#b8860b"/>
+      </radialGradient>
+      <radialGradient id="mainBg" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#1e1e3a"/>
+        <stop offset="50%" stop-color="#141428"/>
+        <stop offset="100%" stop-color="#0a0a14"/>
+      </radialGradient>
+      <filter id="mainGlow">
+        <feGaussianBlur stdDeviation="4" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="outerGlow">
+        <feGaussianBlur stdDeviation="8" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <!-- 外发光环 -->
+    <circle cx="200" cy="200" r="190" fill="none" stroke="rgba(218,165,32,0.08)" stroke-width="20" filter="url(#outerGlow)"/>
+    <!-- 外圈 -->
+    <circle cx="200" cy="200" r="180" fill="none" stroke="url(#mainGold)" stroke-width="3" opacity="0.5"/>
+    <circle cx="200" cy="200" r="170" fill="none" stroke="url(#mainGold)" stroke-width="1" opacity="0.3"/>
+    <!-- 背景圆 -->
+    <circle cx="200" cy="200" r="165" fill="url(#mainBg)"/>
+    <!-- 装饰性梵文咒轮 -->
+    <circle cx="200" cy="200" r="150" fill="none" stroke="rgba(218,165,32,0.08)" stroke-width="0.8" stroke-dasharray="3,6"/>
+    <circle cx="200" cy="200" r="130" fill="none" stroke="rgba(218,165,32,0.06)" stroke-width="0.5"/>
+    <!-- 小圆点装饰 -->
+    <circle cx="200" cy="55" r="2" fill="#daa520" opacity="0.4"/>
+    <circle cx="200" cy="345" r="2" fill="#daa520" opacity="0.4"/>
+    <circle cx="55" cy="200" r="2" fill="#daa520" opacity="0.4"/>
+    <circle cx="345" cy="200" r="2" fill="#daa520" opacity="0.4"/>
+    <!-- 梵文 "अ" - 核心 -->
+    <text x="200" y="238" text-anchor="middle" font-size="155" font-family="'Noto Sans Devanagari','Nirmala UI','Mangal',sans-serif" fill="url(#mainGold)" filter="url(#mainGlow)" font-weight="bold">अ</text>
+    <!-- 下方装饰线 -->
+    <line x1="140" y1="275" x2="260" y2="275" stroke="url(#mainGold)" stroke-width="1" opacity="0.3"/>
+    <line x1="160" y1="282" x2="240" y2="282" stroke="url(#mainGold)" stroke-width="0.5" opacity="0.15"/>
+    <!-- 底部小莲花 -->
+    <g opacity="0.15" transform="translate(200,300)">
+      <ellipse cx="0" cy="0" rx="6" ry="12" fill="#daa520"/>
+      <ellipse cx="-10" cy="-2" rx="5" ry="10" fill="#daa520" transform="rotate(-20 -10 -2)"/>
+      <ellipse cx="10" cy="-2" rx="5" ry="10" fill="#daa520" transform="rotate(20 10 -2)"/>
+    </g>
+  </svg>
+  <p style="color:#6666aa; font-size:12px; margin-top:15px; letter-spacing:2px;">
+    अ · 梵文字母之首 · 宇宙本源之音
+  </p>
+</div>
+
+<div style="margin-top:30px; color:#555577; font-size:12px; text-align:center; line-height:1.8; padding:0 20px;">
+  <p>设计理念：梵文「अ」（阿）为一切音声之源、智慧之始。<br>
+  金色象征智慧光明，圆环代表圆满无碍，莲花寓意清净自在。</p>
+</div>
+
+</body>
+</html>

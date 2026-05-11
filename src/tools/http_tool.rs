@@ -1,4 +1,7 @@
 use super::registry::ToolInfo;
+use std::future::Future;
+use std::pin::Pin;
+use std::sync::Arc;
 
 pub fn create() -> ToolInfo {
     ToolInfo {
@@ -34,18 +37,16 @@ pub fn create() -> ToolInfo {
                 }
             }
         }),
-        execute: Box::new(|arguments| {
-            let args: serde_json::Value = serde_json::from_str(arguments)
-                .map_err(|e| anyhow::anyhow!("Invalid arguments: {}", e))?;
+        execute: Arc::new(|arguments: &str| {
+            let arguments = arguments.to_string();
+            Box::pin(async move {
+                let args: serde_json::Value = serde_json::from_str(&arguments)
+                    .map_err(|e| anyhow::anyhow!("Invalid arguments: {}", e))?;
 
-            let method = args.get("method").and_then(|v| v.as_str()).unwrap_or("GET");
-            let url = args.get("url").and_then(|v| v.as_str())
-                .ok_or_else(|| anyhow::anyhow!("url is required"))?;
+                let method = args.get("method").and_then(|v| v.as_str()).unwrap_or("GET");
+                let url = args.get("url").and_then(|v| v.as_str())
+                    .ok_or_else(|| anyhow::anyhow!("url is required"))?;
 
-            let rt = tokio::runtime::Runtime::new()
-                .map_err(|e| anyhow::anyhow!("Failed to create runtime: {}", e))?;
-
-            let result = rt.block_on(async {
                 let client = reqwest::Client::new();
                 let mut request = match method {
                     "GET" => client.get(url),
@@ -79,9 +80,7 @@ pub fn create() -> ToolInfo {
                     .map_err(|e| anyhow::anyhow!("Failed to read response body: {}", e))?;
 
                 Ok(format!("Status: {}\n\n{}", status, body))
-            });
-
-            result
+            }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>
         }),
     }
 }

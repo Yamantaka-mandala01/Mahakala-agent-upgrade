@@ -48,7 +48,7 @@ struct Cli {
     #[arg(short, long, help = "Port to listen on")]
     port: Option<u16>,
 
-    #[arg(short, long, help = "Host to bind to")]
+    #[arg(short = 'H', long, help = "Host to bind to")]
     host: Option<String>,
 
     #[arg(long, help = "Language (zh/en)")]
@@ -94,8 +94,8 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("Theme: {}", config.theme);
 
     // Create tool registry and register all tools
-    let mut tool_registry = ToolRegistry::new();
-    tools::all_tools::register_all_tools(&mut tool_registry);
+    let tool_registry = ToolRegistry::new();
+    tools::all_tools::register_all_tools(&tool_registry);
     tracing::info!("🛠️ Registered {} tools", tool_registry.count());
 
     // Create AI agent

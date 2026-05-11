@@ -21,110 +21,164 @@ pub mod http_tool;
 // 占位符工具 - 后续实现
 pub mod file_append {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "file_append".to_string(), description: "Append to file".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "file_append".to_string(), description: "Append to file".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod web_search {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "web_search".to_string(), description: "Search web".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "web_search".to_string(), description: "Search web".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod code_execute {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "code_execute".to_string(), description: "Execute code".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "code_execute".to_string(), description: "Execute code".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod edit {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "edit".to_string(), description: "Edit file".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "edit".to_string(), description: "Edit file".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod replace {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "replace".to_string(), description: "Replace text".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "replace".to_string(), description: "Replace text".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod diff {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "diff".to_string(), description: "Diff files".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "diff".to_string(), description: "Diff files".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod grep {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "grep".to_string(), description: "Search text".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "grep".to_string(), description: "Search text".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod head_tail {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "head_tail".to_string(), description: "Head/tail".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "head_tail".to_string(), description: "Head/tail".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod wc {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "wc".to_string(), description: "Word count".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "wc".to_string(), description: "Word count".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod sed {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "sed".to_string(), description: "Stream editor".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "sed".to_string(), description: "Stream editor".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod patch {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "patch".to_string(), description: "Apply patch".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "patch".to_string(), description: "Apply patch".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod git {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "git".to_string(), description: "Git operations".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "git".to_string(), description: "Git operations".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod notification {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "notification".to_string(), description: "Send notification".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "notification".to_string(), description: "Send notification".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod tts {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "tts".to_string(), description: "Text to speech".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "tts".to_string(), description: "Text to speech".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod vision {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "vision".to_string(), description: "Vision processing".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "vision".to_string(), description: "Vision processing".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod url_safety {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "url_safety".to_string(), description: "URL safety check".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "url_safety".to_string(), description: "URL safety check".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod browser_tool {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "browser_tool".to_string(), description: "Browser automation".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "browser_tool".to_string(), description: "Browser automation".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 pub mod skills_tool {
     use super::registry::ToolInfo;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
     pub fn create() -> ToolInfo {
-        ToolInfo { name: "skills_tool".to_string(), description: "Skills execution".to_string(), schema: serde_json::json!({}), execute: Box::new(|_| Ok("Not implemented".to_string())) }
+        ToolInfo { name: "skills_tool".to_string(), description: "Skills execution".to_string(), schema: serde_json::json!({}), execute: Arc::new(|_| Box::pin(async { Ok("Not implemented".to_string()) }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>) }
     }
 }
 

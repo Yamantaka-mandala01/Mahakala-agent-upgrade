@@ -33,6 +33,12 @@ pub struct McpClient {
     servers: Arc<Mutex<HashMap<String, McpServer>>>,
 }
 
+impl Default for McpClient {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl McpClient {
     pub fn new() -> Self {
         Self {

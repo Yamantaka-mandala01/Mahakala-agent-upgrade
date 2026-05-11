@@ -28,6 +28,12 @@ pub struct SkillRegistry {
     skills: Arc<Mutex<HashMap<String, Skill>>>,
 }
 
+impl Default for SkillRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SkillRegistry {
     pub fn new() -> Self {
         let mut skills = HashMap::new();
@@ -166,6 +172,12 @@ impl SkillRegistry {
 #[derive(Clone)]
 pub struct SkillManager {
     registry: Arc<SkillRegistry>,
+}
+
+impl Default for SkillManager {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SkillManager {

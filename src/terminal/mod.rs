@@ -140,6 +140,12 @@ pub struct SshManager {
     sessions: Arc<Mutex<HashMap<String, TerminalSession>>>,
 }
 
+impl Default for SshManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SshManager {
     pub fn new() -> Self {
         Self {

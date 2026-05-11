@@ -34,6 +34,12 @@ pub struct AuthManager {
     sessions: Arc<Mutex<HashMap<String, Session>>>,
 }
 
+impl Default for AuthManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AuthManager {
     pub fn new() -> Self {
         let mut users = HashMap::new();
@@ -153,6 +159,12 @@ impl AuthManager {
 #[derive(Clone)]
 pub struct AuthHandle {
     inner: Arc<AuthManager>,
+}
+
+impl Default for AuthHandle {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AuthHandle {

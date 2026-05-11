@@ -76,6 +76,7 @@ impl AuditSystem {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn log_action(
         &self,
         user_id: String,

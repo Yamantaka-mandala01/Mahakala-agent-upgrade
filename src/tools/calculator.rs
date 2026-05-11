@@ -1,4 +1,7 @@
 use super::registry::ToolInfo;
+use std::future::Future;
+use std::pin::Pin;
+use std::sync::Arc;
 
 pub fn create() -> ToolInfo {
     ToolInfo {
@@ -21,19 +24,21 @@ pub fn create() -> ToolInfo {
                 }
             }
         }),
-        execute: Box::new(|args: &str| {
-            let parsed: serde_json::Value = serde_json::from_str(args)?;
-            let expression = parsed.get("expression")
-                .and_then(|e| e.as_str())
-                .ok_or_else(|| anyhow::anyhow!("Missing 'expression' parameter"))?;
-            
-            // 简单计算器实现
-            let result = match evalexpr::eval(expression) {
-                Ok(val) => format!("{}", val),
-                Err(e) => format!("Error evaluating expression: {}", e),
-            };
-            
-            Ok(result)
+        execute: Arc::new(|args: &str| {
+            let args = args.to_string();
+            Box::pin(async move {
+                let parsed: serde_json::Value = serde_json::from_str(&args)?;
+                let expression = parsed.get("expression")
+                    .and_then(|e| e.as_str())
+                    .ok_or_else(|| anyhow::anyhow!("Missing 'expression' parameter"))?;
+                
+                let result = match evalexpr::eval(expression) {
+                    Ok(val) => format!("{}", val),
+                    Err(e) => format!("Error evaluating expression: {}", e),
+                };
+                
+                Ok(result)
+            }) as Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send>>
         }),
     }
 }

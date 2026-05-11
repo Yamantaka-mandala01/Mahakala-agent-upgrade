@@ -15,6 +15,12 @@ pub struct I18nManager {
     current_locale: Arc<Mutex<String>>,
 }
 
+impl Default for I18nManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl I18nManager {
     pub fn new() -> Self {
         let mut translations: HashMap<String, HashMap<String, String>> = HashMap::new();
@@ -119,7 +125,7 @@ impl I18nManager {
         let mut translations = self.translations.lock();
         translations
             .entry(locale.to_string())
-            .or_insert_with(HashMap::new)
+            .or_default()
             .insert(key.to_string(), value.to_string());
     }
 
@@ -135,6 +141,12 @@ impl I18nManager {
 #[derive(Clone)]
 pub struct I18nHandle {
     inner: Arc<I18nManager>,
+}
+
+impl Default for I18nHandle {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl I18nHandle {

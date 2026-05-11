@@ -28,6 +28,12 @@ pub struct WorkspaceManager {
     active_workspace: Arc<Mutex<Option<String>>>,
 }
 
+impl Default for WorkspaceManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WorkspaceManager {
     pub fn new() -> Self {
         Self {
@@ -197,6 +203,12 @@ impl WorkspaceManager {
 #[derive(Clone)]
 pub struct WorkspaceHandle {
     inner: Arc<WorkspaceManager>,
+}
+
+impl Default for WorkspaceHandle {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl WorkspaceHandle {

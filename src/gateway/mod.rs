@@ -30,6 +30,12 @@ pub struct GatewayManager {
     messages: Arc<Mutex<Vec<Message>>>,
 }
 
+impl Default for GatewayManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GatewayManager {
     pub fn new() -> Self {
         let mut platforms = HashMap::new();
@@ -158,6 +164,12 @@ impl GatewayManager {
 #[derive(Clone)]
 pub struct GatewayHandle {
     inner: Arc<GatewayManager>,
+}
+
+impl Default for GatewayHandle {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl GatewayHandle {

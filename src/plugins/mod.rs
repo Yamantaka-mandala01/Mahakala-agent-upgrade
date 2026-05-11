@@ -47,6 +47,12 @@ pub struct PluginRegistry {
     plugin_dir: PathBuf,
 }
 
+impl Default for PluginRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PluginRegistry {
     pub fn new() -> Self {
         let plugin_dir = crate::constants::get_mahakala_home().join("plugins");
@@ -208,10 +214,10 @@ impl PluginRegistry {
 
     pub fn install_from_manifest(&self, manifest_path: &Path) -> Result<Plugin, AppError> {
         let manifest_content = std::fs::read_to_string(manifest_path)
-            .map_err(|e| AppError::Io(e))?;
+            .map_err(AppError::Io)?;
         
         let manifest: PluginManifest = serde_json::from_str(&manifest_content)
-            .map_err(|e| AppError::Json(e))?;
+            .map_err(AppError::Json)?;
 
         let id = manifest.name.to_lowercase().replace(" ", "_");
         let now = chrono::Utc::now().timestamp();
@@ -236,6 +242,12 @@ impl PluginRegistry {
 #[derive(Clone)]
 pub struct PluginManager {
     registry: Arc<PluginRegistry>,
+}
+
+impl Default for PluginManager {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl PluginManager {

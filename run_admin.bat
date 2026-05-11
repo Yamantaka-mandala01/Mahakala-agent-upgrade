@@ -1,0 +1,1 @@
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File E:\hermes-agent-main\Mahakala-agent-upgrade\admin_clean.ps1' -WindowStyle Hidden"

@@ -599,6 +599,8 @@ You catch issues early and help maintain code quality.
         document.getElementById('btn-wechat-qr-login')?.addEventListener('click', () => this.getWechatQRCode());
         document.getElementById('btn-wechat-qr-check')?.addEventListener('click', () => this.checkWechatQRStatus());
         document.getElementById('btn-new-session')?.addEventListener('click', () => this.createNewSession());
+        document.getElementById('add-fact')?.addEventListener('click', () => this.showAddFactDialog());
+        document.getElementById('search-memory')?.addEventListener('click', () => this.showSearchMemoryDialog());
         document.querySelectorAll('.sidebar-item').forEach(item => {
             item.addEventListener('click', () => {
                 const sessionId = item.getAttribute('data-session-id');
@@ -1581,7 +1583,7 @@ You catch issues early and help maintain code quality.
                     const data = await res.json();
                     const results = data.results || [];
                     if (results.length > 0) {
-                        resultMsg = `找到 ${results.length} 条相关记忆:\n${results.map(r => `- ${r}`).join('\n')}`;
+                        resultMsg = `找到 ${results.length} 条相关记忆:\n${results.map(r => `- ${r.content || r}`).join('\n')}`;
                     } else {
                         resultMsg = '未找到相关记忆';
                     }
@@ -1609,7 +1611,38 @@ You catch issues early and help maintain code quality.
                 }
                 case 'web_search': {
                     this.showNotification(`网页搜索: ${command.query}`, 'info');
-                    resultMsg = `正在搜索: ${command.query}`;
+                    try {
+                        const searchResp = await fetch('/api/tools/web_fetch/execute', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ arguments: JSON.stringify({ url: `https://html.duckduckgo.com/html/?q=${encodeURIComponent(command.query)}` }) })
+                        });
+                        const searchData = await searchResp.json();
+                        if (searchData.success && searchData.result) {
+                            const html = searchData.result;
+                            const results = [];
+                            const resultRegex = /<a[^>]+class="result__a"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
+                            let match;
+                            let count = 0;
+                            while ((match = resultRegex.exec(html)) !== null && count < 5) {
+                                const title = match[1].replace(/<[^>]*>/g, '').trim();
+                                const snippet = match[2].replace(/<[^>]*>/g, '').trim();
+                                if (title) {
+                                    results.push(`- ${title}: ${snippet}`);
+                                    count++;
+                                }
+                            }
+                            if (results.length > 0) {
+                                resultMsg = `找到 ${results.length} 条搜索结果:\n${results.join('\n')}`;
+                            } else {
+                                resultMsg = `未找到 "${command.query}" 的相关搜索结果`;
+                            }
+                        } else {
+                            resultMsg = `搜索 "${command.query}" 时出错: ${searchData.error || '未知错误'}`;
+                        }
+                    } catch (e) {
+                        resultMsg = `搜索 "${command.query}" 时出错: ${e.message}`;
+                    }
                     break;
                 }
                 default:
@@ -1829,7 +1862,8 @@ You catch issues early and help maintain code quality.
         if (!listEl) return;
         try {
             const resp = await fetch('/api/memory/facts');
-            const facts = resp.ok ? await resp.json() : [];
+            const data = resp.ok ? await resp.json() : {};
+            const facts = data.facts || [];
             this.allFacts = facts;
             this.renderFacts(facts);
             const countEl = document.getElementById('fact-count');
@@ -1864,6 +1898,38 @@ You catch issues early and help maintain code quality.
         this.renderFacts(filtered);
     }
 
+    showAddFactDialog() {
+        const content = prompt(this.t('memory.addFact') || '请输入要添加的事实:');
+        if (content && content.trim()) {
+            fetch('/api/memory/facts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content.trim() })
+            }).then(() => {
+                this.loadFactsList();
+                this.showNotification(this.t('notification.success'), 'success');
+            }).catch(() => this.showNotification(this.t('notification.error'), 'error'));
+        }
+    }
+
+    showSearchMemoryDialog() {
+        const query = prompt(this.t('memory.search') || '请输入搜索关键词:');
+        if (query && query.trim()) {
+            fetch('/api/memory/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: query.trim() })
+            }).then(res => res.json()).then(data => {
+                const results = data.results || [];
+                if (results.length > 0) {
+                    alert(`找到 ${results.length} 条相关记忆:\n${results.map(r => `- ${r.content || r}`).join('\n')}`);
+                } else {
+                    alert('未找到相关记忆');
+                }
+            }).catch(() => this.showNotification(this.t('notification.error'), 'error'));
+        }
+    }
+
     async addFact() {
         const input = document.getElementById('new-fact-input');
         if (!input || !input.value.trim()) return;
@@ -1876,7 +1942,10 @@ You catch issues early and help maintain code quality.
     }
 
     async deleteFact(index) {
-        try { await fetch(`/api/memory/facts/${index}`, { method: 'DELETE' }); this.loadFactsList(); } catch (e) {}
+        const fact = this.allFacts && this.allFacts[index];
+        if (!fact) return;
+        const factId = fact.id || index;
+        try { await fetch(`/api/memory/facts/${factId}`, { method: 'DELETE' }); this.loadFactsList(); } catch (e) {}
     }
 
     async loadSkillsPage() {

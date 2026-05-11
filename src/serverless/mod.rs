@@ -69,6 +69,12 @@ pub struct ServerlessManager {
     invocation_counts: Arc<Mutex<HashMap<String, u64>>>,
 }
 
+impl Default for ServerlessManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ServerlessManager {
     pub fn new() -> Self {
         let manager = Self {
@@ -158,6 +164,7 @@ impl ServerlessManager {
         providers.insert(gcp_provider.name.clone(), gcp_provider);
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn create_deployment_config(
         &self,
         name: String,
@@ -225,6 +232,7 @@ impl ServerlessManager {
         configs.values().cloned().collect()
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn update_config(
         &self,
         config_id: &str,

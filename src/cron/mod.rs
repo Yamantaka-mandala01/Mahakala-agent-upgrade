@@ -28,6 +28,12 @@ pub struct CronManager {
     jobs: Arc<Mutex<HashMap<String, CronJob>>>,
 }
 
+impl Default for CronManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CronManager {
     pub fn new() -> Self {
         Self {

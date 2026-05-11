@@ -1,7 +1,7 @@
 use axum::{
     routing::{get, post, delete, put},
     Router, Json,
-    extract::{State, Path, WebSocketUpgrade},
+    extract::{State, Path, Query, WebSocketUpgrade},
     response::Response,
 };
 use std::sync::Arc;
@@ -454,6 +454,7 @@ async fn api_status(State(state): State<Arc<AppState>>) -> Json<Value> {
     }))
 }
 
+#[axum::debug_handler]
 async fn api_chat(
     State(state): State<Arc<AppState>>,
     Json(request): Json<Value>,
@@ -517,7 +518,7 @@ async fn api_chat(
         
         // 测试 Ollama 连接
         let client = reqwest::Client::new();
-        match client.get(&format!("{}/api/tags", base_url)).send().await {
+        match client.get(format!("{}/api/tags", base_url)).send().await {
             Ok(resp) if resp.status().is_success() => {
                 tracing::info!("Ollama connection verified");
             }
@@ -787,7 +788,7 @@ async fn api_list_tools(State(state): State<Arc<AppState>>) -> Json<Value> {
 
 // Memory handlers
 async fn api_get_memory(State(state): State<Arc<AppState>>) -> Json<Value> {
-    match state.memory.list_facts(None) {
+    match state.memory.list_facts(None, Some(100), None) {
         Ok(facts) => Json(serde_json::json!({ "memories": facts })),
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
     }
@@ -809,8 +810,14 @@ async fn api_store_memory(
     }
 }
 
-async fn api_get_facts(State(state): State<Arc<AppState>>) -> Json<Value> {
-    match state.memory.list_facts(None) {
+async fn api_get_facts(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<HashMap<String, String>>,
+) -> Json<Value> {
+    let limit: Option<usize> = params.get("limit").and_then(|v| v.parse().ok());
+    let offset: Option<usize> = params.get("offset").and_then(|v| v.parse().ok());
+    
+    match state.memory.list_facts(None, limit.or(Some(50)), offset.or(Some(0))) {
         Ok(facts) => Json(serde_json::json!({ "facts": facts })),
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
     }

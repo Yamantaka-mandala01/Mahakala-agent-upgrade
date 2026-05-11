@@ -84,6 +84,12 @@ pub struct TrajectoryGenerator {
     counters: Arc<Mutex<HashMap<String, usize>>>,
 }
 
+impl Default for TrajectoryGenerator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TrajectoryGenerator {
     pub fn new() -> Self {
         Self {

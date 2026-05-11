@@ -52,6 +52,12 @@ pub struct RlEnvironment {
     counters: Arc<Mutex<HashMap<String, usize>>>,
 }
 
+impl Default for RlEnvironment {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RlEnvironment {
     pub fn new() -> Self {
         Self {
